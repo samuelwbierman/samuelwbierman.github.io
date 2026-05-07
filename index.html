@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Samuel Bierman — CS Graduate & Developer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f5f0;
+  --bg2:#edeae3;
+  --surface:#ffffff;
+  --border:#d8d3c8;
+  --border-strong:#bfb8aa;
+  --text:#1a1815;
+  --muted:#7a7368;
+  --muted2:#b0a99e;
+  --accent:#1a3a6b;
+  --accent2:#c8341a;
+  --gold:#b8860b;
+  --serif:'Playfair Display',serif;
+  --sans:'Outfit',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.7;overflow-x:hidden}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1.1rem 3rem;display:flex;justify-content:space-between;align-items:center;background:rgba(247,245,240,0.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+.nav-name{font-family:var(--mono);font-size:13px;color:var(--accent);letter-spacing:0.03em;font-weight:500}
+.nav-links{display:flex;gap:2.5rem}
+.nav-links a{font-size:13px;color:var(--muted);text-decoration:none;font-weight:400;letter-spacing:0.03em;transition:color 0.2s}
+.nav-links a:hover{color:var(--accent)}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;align-items:center;padding:8rem 3rem 5rem;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:0;right:-200px;width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(26,58,107,0.06) 0%,transparent 70%);pointer-events:none}
+.hero-inner{max-width:900px;margin:0 auto;width:100%}
+.hero-eyebrow{display:flex;align-items:center;gap:1rem;margin-bottom:2rem}
+.hero-tag{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:0.12em;text-transform:uppercase;border:1px solid var(--accent);padding:0.3rem 0.8rem;border-radius:3px}
+.hero-sep{height:1px;width:60px;background:var(--border-strong)}
+.hero-badges{display:flex;gap:0.5rem;flex-wrap:wrap}
+.badge{font-family:var(--mono);font-size:10px;color:var(--muted);border:1px solid var(--border);padding:0.25rem 0.6rem;border-radius:2px;letter-spacing:0.06em}
+.badge.gold{color:var(--gold);border-color:var(--gold)}
+.badge.red{color:var(--accent2);border-color:var(--accent2)}
+h1{font-family:var(--serif);font-size:clamp(3.2rem,7vw,5.5rem);font-weight:400;line-height:1.08;margin-bottom:1.8rem;letter-spacing:-0.01em}
+h1 .italic{font-style:italic;color:var(--muted)}
+.hero-sub{font-size:1.15rem;color:var(--muted);max-width:580px;line-height:1.85;margin-bottom:2.5rem;font-weight:300}
+.hero-actions{display:flex;gap:0.9rem;flex-wrap:wrap;margin-bottom:3.5rem}
+.btn{display:inline-flex;align-items:center;gap:0.5rem;padding:0.7rem 1.6rem;font-size:14px;font-family:var(--sans);font-weight:500;text-decoration:none;cursor:pointer;transition:all 0.2s;border:1px solid transparent;border-radius:3px;letter-spacing:0.02em}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-primary:hover{background:#152e58}
+.btn-outline{background:transparent;color:var(--text);border-color:var(--border-strong)}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+.hero-stats{display:flex;gap:3rem;padding-top:2.5rem;border-top:1px solid var(--border)}
+.stat-num{font-family:var(--serif);font-size:2rem;font-weight:700;color:var(--accent);display:block;line-height:1}
+.stat-label{font-size:12px;color:var(--muted);margin-top:0.3rem;font-weight:300}
+
+/* SECTIONS */
+.section{padding:6rem 3rem;border-top:1px solid var(--border)}
+.section-inner{max-width:900px;margin:0 auto}
+.section-header{display:flex;align-items:baseline;gap:1.5rem;margin-bottom:3.5rem}
+.section-num{font-family:var(--mono);font-size:11px;color:var(--muted2);letter-spacing:0.1em}
+.section-title{font-family:var(--serif);font-size:2rem;font-weight:400}
+
+/* ABOUT */
+.about-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:4rem;align-items:start}
+.about-text p{color:var(--muted);line-height:1.95;margin-bottom:1.1rem;font-weight:300;font-size:1.05rem}
+.about-text p strong{color:var(--text);font-weight:500}
+.quick-facts{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:1.5rem;display:flex;flex-direction:column;gap:0}
+.fact-row{display:flex;flex-direction:column;padding:0.85rem 0;border-bottom:1px solid var(--border)}
+.fact-row:last-child{border-bottom:none}
+.fact-label{font-family:var(--mono);font-size:10px;color:var(--muted2);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.2rem}
+.fact-val{font-size:13.5px;color:var(--text);font-weight:400}
+.award-row{display:flex;align-items:center;gap:0.5rem;margin-top:0.2rem}
+.award-icon{font-size:13px}
+
+/* SKILLS */
+.skills-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+.skill-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:1.25rem 1.5rem}
+.skill-card-title{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.9rem}
+.skill-tags{display:flex;flex-wrap:wrap;gap:0.4rem}
+.skill-tag{font-size:12.5px;color:var(--muted);background:var(--bg2);border:1px solid var(--border);padding:0.3rem 0.7rem;border-radius:3px}
+.skill-tag.strong{color:var(--text);border-color:var(--border-strong);background:var(--surface)}
+
+/* EXPERIENCE */
+.exp-list{display:flex;flex-direction:column;gap:0}
+.exp-item{display:grid;grid-template-columns:160px 1fr;gap:2.5rem;padding:2.5rem 0;border-bottom:1px solid var(--border)}
+.exp-item:first-child{padding-top:0}
+.exp-item:last-child{border-bottom:none}
+.exp-meta{display:flex;flex-direction:column;gap:0.3rem;padding-top:0.15rem}
+.exp-date{font-family:var(--mono);font-size:11px;color:var(--muted2);letter-spacing:0.05em}
+.exp-loc{font-size:12px;color:var(--muted);font-weight:300}
+.exp-body{}
+.exp-role{font-size:1.05rem;font-weight:600;margin-bottom:0.15rem;color:var(--text)}
+.exp-org{font-family:var(--mono);font-size:12px;color:var(--accent);margin-bottom:0.75rem;letter-spacing:0.03em}
+.exp-bullets{display:flex;flex-direction:column;gap:0.4rem;padding-left:0}
+.exp-bullets li{font-size:14px;color:var(--muted);line-height:1.75;list-style:none;padding-left:1rem;position:relative;font-weight:300}
+.exp-bullets li::before{content:'—';position:absolute;left:0;color:var(--muted2)}
+.exp-awards{display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem}
+.exp-award{font-family:var(--mono);font-size:10px;background:#fef9ec;border:1px solid #e8d285;color:var(--gold);padding:0.25rem 0.65rem;border-radius:3px;letter-spacing:0.05em}
+.exp-award.military{background:#eef2f8;border-color:#a8bcd8;color:var(--accent)}
+
+/* PROJECTS */
+.projects-list{display:flex;flex-direction:column;gap:0}
+.project-item{padding:2rem 0;border-bottom:1px solid var(--border);display:grid;grid-template-columns:1fr auto;gap:2rem;align-items:start}
+.project-item:first-child{padding-top:0}
+.project-item:last-child{border-bottom:none}
+.project-eyebrow{display:flex;align-items:center;gap:0.75rem;margin-bottom:0.5rem}
+.project-cat{font-family:var(--mono);font-size:10px;color:var(--muted2);letter-spacing:0.1em;text-transform:uppercase}
+.project-win{font-family:var(--mono);font-size:10px;color:var(--gold);letter-spacing:0.08em;border:1px solid var(--gold);padding:0.15rem 0.5rem;border-radius:2px}
+.project-name{font-family:var(--serif);font-size:1.4rem;font-weight:400;margin-bottom:0.5rem}
+.project-desc{font-size:14px;color:var(--muted);line-height:1.8;font-weight:300;margin-bottom:0.9rem}
+.project-stack{display:flex;flex-wrap:wrap;gap:0.4rem}
+.stack-tag{font-family:var(--mono);font-size:10.5px;padding:0.25rem 0.6rem;border-radius:3px;background:var(--bg2);color:var(--muted);border:1px solid var(--border)}
+.project-link{font-family:var(--mono);font-size:12px;color:var(--accent);text-decoration:none;white-space:nowrap;padding-top:0.3rem;transition:opacity 0.2s}
+.project-link:hover{opacity:0.7}
+
+/* EDUCATION */
+.edu-block{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:2rem 2.5rem;display:grid;grid-template-columns:1fr auto;gap:2rem;align-items:start;margin-bottom:1rem}
+.edu-school{font-family:var(--serif);font-size:1.3rem;font-weight:400;margin-bottom:0.2rem}
+.edu-degree{font-size:14px;color:var(--muted);margin-bottom:1rem;font-weight:300}
+.edu-distinctions{display:flex;flex-wrap:wrap;gap:0.5rem}
+.edu-tag{font-size:12px;padding:0.25rem 0.75rem;border-radius:3px;background:var(--bg2);border:1px solid var(--border);color:var(--text)}
+.edu-tag.honors{background:#eef2f8;border-color:#a8bcd8;color:var(--accent);font-weight:500}
+.edu-date{font-family:var(--mono);font-size:12px;color:var(--muted2);text-align:right;white-space:nowrap}
+.edu-courses{margin-top:2.5rem}
+.edu-courses-title{font-family:var(--mono);font-size:11px;color:var(--muted2);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:1rem}
+.courses-grid{display:flex;flex-wrap:wrap;gap:0.5rem}
+.course-tag{font-size:12px;color:var(--muted);background:var(--bg2);border:1px solid var(--border);padding:0.3rem 0.75rem;border-radius:3px}
+
+/* CONTACT */
+.contact-split{display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:start}
+.contact-intro h2{font-family:var(--serif);font-size:2.2rem;font-weight:400;margin-bottom:1rem;line-height:1.2}
+.contact-intro p{color:var(--muted);line-height:1.85;font-weight:300;font-size:1.05rem}
+.contact-links{display:flex;flex-direction:column;gap:0}
+.contact-link-item{display:flex;align-items:center;justify-content:space-between;padding:1rem 0;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text);transition:color 0.2s;gap:1rem}
+.contact-link-item:first-child{border-top:1px solid var(--border)}
+.contact-link-item:hover{color:var(--accent)}
+.contact-link-label{font-family:var(--mono);font-size:11px;color:var(--muted2);letter-spacing:0.08em;text-transform:uppercase;min-width:70px}
+.contact-link-val{font-size:14px;font-weight:400}
+.contact-link-arrow{font-size:18px;color:var(--muted2);transition:transform 0.2s}
+.contact-link-item:hover .contact-link-arrow{transform:translateX(3px)}
+
+/* FOOTER */
+footer{text-align:center;padding:2.5rem 3rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.footer-name{font-family:var(--serif);font-size:1rem;font-style:italic;color:var(--muted)}
+.footer-note{font-family:var(--mono);font-size:11px;color:var(--muted2)}
+
+/* REVEAL */
+.reveal{opacity:0;transform:translateY(20px);transition:opacity 0.65s ease,transform 0.65s ease}
+.reveal.visible{opacity:1;transform:none}
+.d1{transition-delay:0.1s}.d2{transition-delay:0.2s}.d3{transition-delay:0.3s}.d4{transition-delay:0.4s}
+
+@media(max-width:700px){
+  nav{padding:1rem 1.5rem}
+  .hero{padding:7rem 1.5rem 4rem}
+  .section{padding:4rem 1.5rem}
+  .about-grid,.skills-grid,.contact-split{grid-template-columns:1fr}
+  .exp-item,.project-item,.edu-block{grid-template-columns:1fr}
+  .hero-stats{gap:1.5rem}
+  footer{flex-direction:column;gap:0.5rem}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="nav-name">samuel.bierman</span>
+  <div class="nav-links">
+    <a href="#about">about</a>
+    <a href="#experience">experience</a>
+    <a href="#projects">projects</a>
+    <a href="#education">education</a>
+    <a href="#contact">contact</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow reveal">
+      <span class="hero-tag">CS Graduate · May 2026</span>
+      <div class="hero-sep"></div>
+      <div class="hero-badges">
+        <span class="badge gold">★ PRSA Award ×2</span>
+        <span class="badge gold">★ User Choice Award</span>
+        <span class="badge red">⬥ OCS Graduate</span>
+      </div>
+    </div>
+    <h1 class="reveal d1">Samuel<br><span class="italic">Bierman.</span></h1>
+    <p class="hero-sub reveal d2">Full-stack developer with a focus on backend systems, database architecture, and applied AI. I build things that work — and I do it with the discipline of someone who earned their degree while working two jobs and completing Marine Corps OCS.</p>
+    <div class="hero-actions reveal d3">
+      <a href="#projects" class="btn btn-primary">View my work</a>
+      <a href="#contact" class="btn btn-outline">Get in touch</a>
+      <a href="https://github.com/samuelwbierman" target="_blank" class="btn btn-outline">GitHub ↗</a>
+    </div>
+    <div class="hero-stats reveal d4">
+      <div>
+        <span class="stat-num">4+</span>
+        <div class="stat-label">Years hands-on experience</div>
+      </div>
+      <div>
+        <span class="stat-num">2</span>
+        <div class="stat-label">PRSA awards won</div>
+      </div>
+      <div>
+        <span class="stat-num">10wk</span>
+        <div class="stat-label">Marine Corps OCS</div>
+      </div>
+      <div>
+        <span class="stat-num">B.S.</span>
+        <div class="stat-label">Computer Science, CNU</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ABOUT -->
+<div class="section" id="about">
+  <div class="section-inner">
+    <div class="section-header reveal">
+      <span class="section-num">01</span>
+      <h2 class="section-title">About me</h2>
+    </div>
+    <div class="about-grid">
+      <div class="about-text reveal">
+        <p>I'm a <strong>computer science graduate from Christopher Newport University</strong>, where I was a member of the Honors Program. I'm bilingual in English and French, and I graduated in May 2026 after four years of balancing a full academic load with two jobs — because I paid my own way through college.</p>
+        <p>On the technical side, I gravitate toward <strong>backend systems and database architecture</strong>. I care about building things that are reliable, scalable, and maintainable — not just things that work once. My capstone project won the User Choice Award, and my web development work at Jefferson Lab earned two PRSA recognitions.</p>
+        <p>Outside of code, I'm a <strong>Marine Corps OCS graduate</strong> and an Eagle Scout. I bring that same focus — attention to detail, performance under pressure, and genuine accountability — into every project I work on. I'm currently open to full-time roles in software engineering, data engineering, or backend development.</p>
+      </div>
+      <div class="quick-facts reveal d1">
+        <div class="fact-row">
+          <span class="fact-label">Location</span>
+          <span class="fact-val">Newport News, VA</span>
+        </div>
+        <div class="fact-row">
+          <span class="fact-label">Education</span>
+          <span class="fact-val">B.S. Computer Science — CNU, 2026</span>
+        </div>
+        <div class="fact-row">
+          <span class="fact-label">Languages</span>
+          <span class="fact-val">English · French (bilingual)</span>
+        </div>
+        <div class="fact-row">
+          <span class="fact-label">Distinctions</span>
+          <div>
+            <div class="award-row"><span class="award-icon">★</span><span class="fact-val">2× PRSA Award</span></div>
+            <div class="award-row"><span class="award-icon">★</span><span class="fact-val">User Choice Award — Capstone</span></div>
+            <div class="award-row"><span class="award-icon">⬥</span><span class="fact-val">Eagle Scout</span></div>
+            <div class="award-row"><span class="award-icon">⬥</span><span class="fact-val">Marine Corps OCS Graduate</span></div>
+          </div>
+        </div>
+        <div class="fact-row">
+          <span class="fact-label">Status</span>
+          <span class="fact-val" style="color:#1a3a6b;font-weight:500">Open to opportunities</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SKILLS -->
+    <div style="margin-top:3.5rem">
+      <div class="section-header reveal" style="margin-bottom:1.5rem">
+        <span class="section-num"></span>
+        <h3 style="font-family:var(--mono);font-size:12px;color:var(--muted2);letter-spacing:0.1em;text-transform:uppercase;font-weight:400">Technical skills</h3>
+      </div>
+      <div class="skills-grid reveal d1">
+        <div class="skill-card">
+          <div class="skill-card-title">Languages</div>
+          <div class="skill-tags">
+            <span class="skill-tag strong">Python</span>
+            <span class="skill-tag strong">SQL</span>
+            <span class="skill-tag strong">HTML/CSS</span>
+            <span class="skill-tag">C++</span>
+            <span class="skill-tag">Java</span>
+            <span class="skill-tag">JavaScript</span>
+            <span class="skill-tag">Dart</span>
+            <span class="skill-tag">C</span>
+          </div>
+        </div>
+        <div class="skill-card">
+          <div class="skill-card-title">Frameworks & Tools</div>
+          <div class="skill-tags">
+            <span class="skill-tag strong">Supabase</span>
+            <span class="skill-tag strong">Flutter</span>
+            <span class="skill-tag strong">FastAPI</span>
+            <span class="skill-tag">Railway</span>
+            <span class="skill-tag">Git</span>
+            <span class="skill-tag">Linux</span>
+            <span class="skill-tag">Agile/Scrum</span>
+          </div>
+        </div>
+        <div class="skill-card">
+          <div class="skill-card-title">Concepts</div>
+          <div class="skill-tags">
+            <span class="skill-tag strong">PostgreSQL schema design</span>
+            <span class="skill-tag strong">REST API integration</span>
+            <span class="skill-tag">System design</span>
+            <span class="skill-tag">CI/CD</span>
+            <span class="skill-tag">Data structures</span>
+            <span class="skill-tag">Algorithms</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EXPERIENCE -->
+<div class="section" id="experience">
+  <div class="section-inner">
+    <div class="section-header reveal">
+      <span class="section-num">02</span>
+      <h2 class="section-title">Experience</h2>
+    </div>
+    <div class="exp-list">
+
+      <div class="exp-item reveal">
+        <div class="exp-meta">
+          <span class="exp-date">2024 – 2025</span>
+          <span class="exp-loc">Newport News, VA</span>
+        </div>
+        <div class="exp-body">
+          <p class="exp-role">Web Development Intern</p>
+          <p class="exp-org">Thomas Jefferson National Accelerator Facility (Jefferson Lab)</p>
+          <ul class="exp-bullets">
+            <li>Primary focus on HTML and CSS, building and maintaining web-facing content for one of the nation's leading particle physics research facilities.</li>
+            <li>Developed scripts enabling mass document changes across large content repositories, significantly reducing manual effort for the web team.</li>
+            <li>Recognized with two PRSA (Public Relations Society of America) awards for outstanding work on communications and web projects.</li>
+          </ul>
+          <div class="exp-awards">
+            <span class="exp-award">★ PRSA Award</span>
+            <span class="exp-award">★ PRSA Award</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="exp-item reveal">
+        <div class="exp-meta">
+          <span class="exp-date">Summer</span>
+          <span class="exp-loc">Marine Corps</span>
+        </div>
+        <div class="exp-body">
+          <p class="exp-role">Officer Candidate School Graduate</p>
+          <p class="exp-org">United States Marine Corps</p>
+          <ul class="exp-bullets">
+            <li>Completed the 10-week Marine Corps Officer Candidate School — a rigorous program centered on leadership, resilience, and decision-making under pressure.</li>
+            <li>Developed the ability to perform and lead effectively in high-stakes, ambiguous environments with limited information.</li>
+          </ul>
+          <div class="exp-awards">
+            <span class="exp-award military">⬥ OCS Graduate</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="exp-item reveal">
+        <div class="exp-meta">
+          <span class="exp-date">2022 – Present</span>
+          <span class="exp-loc">Newport News, VA</span>
+        </div>
+        <div class="exp-body">
+          <p class="exp-role">Lifeguard (Weekend)</p>
+          <p class="exp-org">Lifeguard · Self-funded education</p>
+          <ul class="exp-bullets">
+            <li>Worked weekends throughout college as a lifeguard, contributing to fully self-funding my undergraduate education.</li>
+            <li>Awarded "Lifeguard of the Summer" for two consecutive years.</li>
+          </ul>
+          <div class="exp-awards">
+            <span class="exp-award">★ Lifeguard of the Summer ×2</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- PROJECTS -->
+<div class="section" id="projects">
+  <div class="section-inner">
+    <div class="section-header reveal">
+      <span class="section-num">03</span>
+      <h2 class="section-title">Projects</h2>
+    </div>
+    <div class="projects-list">
+
+      <div class="project-item reveal">
+        <div>
+          <div class="project-eyebrow">
+            <span class="project-cat">Capstone · Team lead (DB)</span>
+            <span class="project-win">★ User Choice Award</span>
+          </div>
+          <p class="project-name">AI-Powered News Aggregator</p>
+          <p class="project-desc">A cross-platform mobile app that fetches, summarizes, and personalizes daily news using AI. I owned the entire database layer: designed the PostgreSQL schema from scratch in Supabase, wrote SQL scripts for user authentication, built data parameters for content personalization, and integrated external APIs into the database to drive the app's core functionality. The backend (FastAPI on Railway) runs automated daily cron jobs for news fetch, AI summarization, and database writes.</p>
+          <div class="project-stack">
+            <span class="stack-tag">Supabase</span><span class="stack-tag">PostgreSQL</span><span class="stack-tag">Flutter</span>
+            <span class="stack-tag">FastAPI</span><span class="stack-tag">Python</span><span class="stack-tag">Railway</span>
+            <span class="stack-tag">Firecrawl</span><span class="stack-tag">OpenAI</span>
+          </div>
+        </div>
+        <a href="https://github.com/samuelwbierman" target="_blank" class="project-link">github ↗</a>
+      </div>
+
+      <div class="project-item reveal">
+        <div>
+          <div class="project-eyebrow">
+            <span class="project-cat">Solo project · NFC / Mobile</span>
+          </div>
+          <p class="project-name">TrackIt! <span style="font-family:var(--mono);font-size:13px;color:var(--muted2);font-style:normal">(name may change)</span></p>
+          <p class="project-desc">A database-driven mobile app for tracking physical items using NFC stickers. Users register any item they want to monitor, program an NFC sticker to it, then tap their phone to instantly toggle that item between <em>in</em> and <em>away</em> — no manual searching, no spreadsheets. Built to work for any environment: home, job site, warehouse, or kit room. The backend is structured around a relational database that maps each NFC tag ID to a user's item records, with real-time state updates on every tap.</p>
+          <div class="project-stack">
+            <span class="stack-tag">Flutter</span><span class="stack-tag">Dart</span><span class="stack-tag">NFC</span>
+            <span class="stack-tag">Supabase</span><span class="stack-tag">PostgreSQL</span><span class="stack-tag">Mobile</span>
+          </div>
+        </div>
+        <a href="https://github.com/samuelwbierman" target="_blank" class="project-link">github ↗</a>
+      </div>
+
+      <div class="project-item reveal">
+        <div>
+          <div class="project-eyebrow">
+            <span class="project-cat">Personal website</span>
+          </div>
+          <p class="project-name">Personal Portfolio</p>
+          <p class="project-desc">Designed and deployed this portfolio site using HTML and CSS, hosted on GitHub Pages. Built to showcase projects, experience, and skills in a clean, fast, no-framework format.</p>
+          <div class="project-stack">
+            <span class="stack-tag">HTML</span><span class="stack-tag">CSS</span><span class="stack-tag">GitHub Pages</span>
+          </div>
+        </div>
+        <a href="https://samuelwbierman.github.io" target="_blank" class="project-link">live site ↗</a>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- EDUCATION -->
+<div class="section" id="education">
+  <div class="section-inner">
+    <div class="section-header reveal">
+      <span class="section-num">04</span>
+      <h2 class="section-title">Education</h2>
+    </div>
+    <div class="edu-block reveal">
+      <div>
+        <p class="edu-school">Christopher Newport University</p>
+        <p class="edu-degree">Bachelor of Science, Computer Science · Newport News, VA</p>
+        <div class="edu-distinctions">
+          <span class="edu-tag honors">Honors Program</span>
+          <span class="edu-tag">Eagle Scout</span>
+          <span class="edu-tag">Presidential Leadership Program</span>
+          <span class="edu-tag">Computer Science &amp; Engineering Scholar</span>
+          <span class="edu-tag">Bilingual: English / French</span>
+        </div>
+      </div>
+      <div class="edu-date">
+        <div>Graduated</div>
+        <div style="font-size:15px;color:var(--text);font-weight:500;margin-top:0.25rem">May 2026</div>
+      </div>
+    </div>
+    <div class="edu-courses reveal d1">
+      <p class="edu-courses-title">Relevant coursework</p>
+      <div class="courses-grid">
+        <span class="course-tag">Database Management Systems</span>
+        <span class="course-tag">Extreme Python</span>
+        <span class="course-tag">Operating Systems</span>
+        <span class="course-tag">Algorithms</span>
+        <span class="course-tag">Software Design & Development</span>
+        <span class="course-tag">Digital Logic Design</span>
+        <span class="course-tag">C++ Programming</span>
+        <span class="course-tag">Java</span>
+        <span class="course-tag">JavaScript</span>
+        <span class="course-tag">Data & File Structures</span>
+        <span class="course-tag">Discrete Structures</span>
+        <span class="course-tag">Programming Language Concepts</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTACT -->
+<div class="section" id="contact">
+  <div class="section-inner">
+    <div class="section-header reveal">
+      <span class="section-num">05</span>
+      <h2 class="section-title">Contact</h2>
+    </div>
+    <div class="contact-split">
+      <div class="contact-intro reveal">
+        <h2>Let's talk.</h2>
+        <p>I'm actively looking for full-time roles in software engineering, backend development, or data engineering. Whether it's a job opportunity, a technical conversation, or a collaboration — I'm happy to hear from you.</p>
+      </div>
+      <div class="contact-links reveal d1">
+        <a href="mailto:samuelwbierman@gmail.com" class="contact-link-item">
+          <span class="contact-link-label">Email</span>
+          <span class="contact-link-val">samuelwbierman@gmail.com</span>
+          <span class="contact-link-arrow">→</span>
+        </a>
+        <a href="tel:9515524538" class="contact-link-item">
+          <span class="contact-link-label">Phone</span>
+          <span class="contact-link-val">(951) 552-4538</span>
+          <span class="contact-link-arrow">→</span>
+        </a>
+        <a href="https://github.com/samuelwbierman" target="_blank" class="contact-link-item">
+          <span class="contact-link-label">GitHub</span>
+          <span class="contact-link-val">github.com/samuelwbierman</span>
+          <span class="contact-link-arrow">→</span>
+        </a>
+        <a href="https://linkedin.com" target="_blank" class="contact-link-item">
+          <span class="contact-link-label">LinkedIn</span>
+          <span class="contact-link-val">linkedin.com/in/samuel-bierman</span>
+          <span class="contact-link-arrow">→</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span class="footer-name">Samuel Bierman</span>
+  <span class="footer-note">Newport News, VA · 2026</span>
+</footer>
+
+<script>
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible') });
+}, { threshold: 0.08, rootMargin: '0px 0px -30px 0px' });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+</script>
+</body>
+</html>
