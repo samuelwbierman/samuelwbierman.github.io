@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Earnings Timer</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f5f3;
+      --surface: #ffffff;
+      --surface-2: #f0efeb;
+      --text: #1a1a18;
+      --text-muted: #888780;
+      --border: rgba(0,0,0,0.1);
+      --border-strong: rgba(0,0,0,0.18);
+      --accent-bg: #e6f1fb;
+      --accent-border: #b5d4f4;
+      --accent-text: #185fa5;
+      --green-bg: #eaf3de;
+      --green-border: #c0dd97;
+      --green-text: #3b6d11;
+      --red-bg: #fcebeb;
+      --red-border: #f7c1c1;
+      --red-text: #a32d2d;
+      --radius: 8px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1a1a18;
+        --surface: #2c2c2a;
+        --surface-2: #222220;
+        --text: #f0efeb;
+        --text-muted: #888780;
+        --border: rgba(255,255,255,0.1);
+        --border-strong: rgba(255,255,255,0.18);
+        --accent-bg: #0c2a44;
+        --accent-border: #185fa5;
+        --accent-text: #85b7eb;
+        --green-bg: #173404;
+        --green-border: #3b6d11;
+        --green-text: #c0dd97;
+        --red-bg: #501313;
+        --red-border: #a32d2d;
+        --red-text: #f7c1c1;
+      }
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 440px;
+    }
+
+    h1 { font-size: 18px; font-weight: 500; margin-bottom: 1.5rem; }
+
+    .section-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+    }
+
+    .job-toggle { display: flex; gap: 8px; margin-bottom: 1.5rem; }
+
+    .job-btn {
+      flex: 1;
+      padding: 10px 14px;
+      border: 0.5px solid var(--border-strong);
+      border-radius: var(--radius);
+      background: var(--surface-2);
+      color: var(--text-muted);
+      font-size: 14px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.12s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .job-btn.on {
+      background: var(--accent-bg);
+      border-color: var(--accent-border);
+      color: var(--accent-text);
+      font-weight: 500;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 1rem;
+    }
+
+    .stat {
+      background: var(--surface-2);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+    }
+
+    .stat.wide { grid-column: 1 / -1; }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+
+    .stat-val {
+      font-size: 26px;
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.1;
+    }
+
+    .stat-val.big { font-size: 42px; }
+
+    #ticker {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+      margin-top: 4px;
+      min-height: 16px;
+    }
+
+    #breakdown {
+      display: none;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 1rem;
+    }
+
+    .controls { display: flex; gap: 8px; margin-top: 1rem; }
+
+    .ctrl-btn {
+      flex: 1;
+      padding: 11px;
+      border: 0.5px solid var(--border-strong);
+      border-radius: var(--radius);
+      background: var(--surface-2);
+      color: var(--text);
+      font-size: 14px;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+
+    .ctrl-btn:hover { opacity: 0.8; }
+    .ctrl-btn.start { background: var(--green-bg); border-color: var(--green-border); color: var(--green-text); }
+    .ctrl-btn.stop  { background: var(--red-bg);   border-color: var(--red-border);   color: var(--red-text); }
+  </style>
+</head>
+<body>
+<div class="card">
+  <h1>⏱ Earnings timer</h1>
+
+  <p class="section-label">Active jobs</p>
+  <div class="job-toggle" id="jobToggles"></div>
+
+  <div class="stat-grid">
+    <div class="stat wide">
+      <div class="stat-label">Total earned</div>
+      <div class="stat-val big" id="earned">$0.0000</div>
+      <div id="ticker"></div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Time elapsed</div>
+      <div class="stat-val" id="elapsed">00:00:00</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Combined rate</div>
+      <div class="stat-val" id="rate-display">$0.00/hr</div>
+    </div>
+  </div>
+
+  <div id="breakdown"></div>
+
+  <div class="controls">
+    <button class="ctrl-btn start" onclick="startAll()">▶ Start all</button>
+    <button class="ctrl-btn stop"  onclick="stopAll()">⏸ Pause all</button>
+    <button class="ctrl-btn"       onclick="resetAll()">↺ Reset</button>
+  </div>
+</div>
+
+<script>
+  // ─────────────────────────────────────────
+  //  CONFIGURE YOUR JOBS HERE
+  // ─────────────────────────────────────────
+  const JOBS = [
+    { label: "Handshake AI", emoji: "💼", hourly: 25.00 },
+    { label: "USMC O-1",     emoji: "🎖",  hourly: 40.00 },
+  ];
+  // ─────────────────────────────────────────
+
+  const state = JOBS.map(() => ({
+    on: false, running: false, startedAt: null, accMs: 0
+  }));
+
+  let rafId = null;
+  let lastTotal = 0;
+  let globalRunning = false;
+  let globalStartedAt = null;
+  let globalAccMs = 0;
+
+  function renderToggles() {
+    const wrap = document.getElementById('jobToggles');
+    wrap.innerHTML = '';
+    JOBS.forEach((job, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'job-btn' + (state[i].on ? ' on' : '');
+      btn.textContent = job.emoji + ' ' + job.label;
+      btn.onclick = () => toggleJob(i);
+      wrap.appendChild(btn);
+    });
+  }
+
+  function renderBreakdown() {
+    const wrap = document.getElementById('breakdown');
+    const active = JOBS.filter((_, i) => state[i].on);
+    if (active.length < 2) { wrap.style.display = 'none'; return; }
+    wrap.style.display = 'grid';
+    wrap.innerHTML = '';
+    JOBS.forEach((job, i) => {
+      if (!state[i].on) return;
+      const ms = state[i].accMs + (state[i].running ? performance.now() - state[i].startedAt : 0);
+      const earned = (job.hourly / 3600) * (ms / 1000);
+      const div = document.createElement('div');
+      div.className = 'stat';
+      div.innerHTML =
+        '<div class="stat-label">' + job.emoji + ' ' + job.label + '</div>' +
+        '<div class="stat-val" style="font-size:20px">$' + earned.toFixed(4) + '</div>';
+      wrap.appendChild(div);
+    });
+  }
+
+  function updateRate() {
+    const combined = JOBS.reduce((s, job, i) => s + (state[i].on ? job.hourly : 0), 0);
+    document.getElementById('rate-display').textContent = '$' + combined.toFixed(2) + '/hr';
+  }
+
+  function toggleJob(i) {
+    const now = performance.now();
+    state[i].on = !state[i].on;
+    if (!state[i].on && state[i].running) {
+      state[i].accMs += now - state[i].startedAt;
+      state[i].startedAt = null;
+      state[i].running = false;
+    }
+    renderToggles();
+    updateRate();
+    maybeManageGlobal();
+    maybeStartRaf();
+  }
+
+  function startAll() {
+    const now = performance.now();
+    JOBS.forEach((_, i) => {
+      state[i].on = true;
+      if (!state[i].running) { state[i].running = true; state[i].startedAt = now; }
+    });
+    if (!globalRunning) { globalRunning = true; globalStartedAt = now; }
+    renderToggles();
+    updateRate();
+    if (!rafId) rafId = requestAnimationFrame(tick);
+  }
+
+  function stopAll() {
+    const now = performance.now();
+    JOBS.forEach((_, i) => {
+      if (state[i].running) {
+        state[i].accMs += now - state[i].startedAt;
+        state[i].startedAt = null;
+        state[i].running = false;
+      }
+    });
+    if (globalRunning) {
+      globalAccMs += now - globalStartedAt;
+      globalStartedAt = null;
+      globalRunning = false;
+    }
+    cancelAnimationFrame(rafId); rafId = null;
+    renderBreakdown();
+  }
+
+  function resetAll() {
+    stopAll();
+    state.forEach(s => { s.on = false; s.running = false; s.startedAt = null; s.accMs = 0; });
+    globalAccMs = 0; globalRunning = false; globalStartedAt = null; lastTotal = 0;
+    document.getElementById('earned').textContent = '$0.0000';
+    document.getElementById('elapsed').textContent = '00:00:00';
+    document.getElementById('ticker').textContent = '';
+    document.getElementById('breakdown').innerHTML = '';
+    document.getElementById('breakdown').style.display = 'none';
+    renderToggles();
+    updateRate();
+  }
+
+  function maybeManageGlobal() {
+    const anyOn = state.some(s => s.on);
+    const now = performance.now();
+    if (anyOn && !globalRunning) { globalRunning = true; globalStartedAt = now; }
+    else if (!anyOn && globalRunning) {
+      globalAccMs += now - globalStartedAt;
+      globalStartedAt = null; globalRunning = false;
+    }
+  }
+
+  function maybeStartRaf() {
+    const now = performance.now();
+    JOBS.forEach((_, i) => {
+      if (state[i].on && !state[i].running) { state[i].running = true; state[i].startedAt = now; }
+    });
+    if (state.some(s => s.running) && !rafId) rafId = requestAnimationFrame(tick);
+    if (!state.some(s => s.on)) { cancelAnimationFrame(rafId); rafId = null; }
+  }
+
+  function tick() {
+    const now = performance.now();
+    let total = 0;
+    JOBS.forEach((job, i) => {
+      if (!state[i].on) return;
+      const ms = state[i].accMs + (state[i].running ? now - state[i].startedAt : 0);
+      total += (job.hourly / 3600) * (ms / 1000);
+    });
+
+    const delta = total - lastTotal;
+    lastTotal = total;
+
+    document.getElementById('earned').textContent = '$' + total.toFixed(4);
+
+    const elapsedMs = globalAccMs + (globalRunning ? now - globalStartedAt : 0);
+    const sec = elapsedMs / 1000;
+    const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = Math.floor(sec % 60);
+    document.getElementById('elapsed').textContent =
+      String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+
+    document.getElementById('ticker').textContent =
+      delta > 0 ? '+$' + (delta * 60).toFixed(6) + '/min' : '';
+
+    renderBreakdown();
+
+    if (state.some(s => s.running)) rafId = requestAnimationFrame(tick);
+    else rafId = null;
+  }
+
+  renderToggles();
+  updateRate();
+</script>
+</body>
+</html>
