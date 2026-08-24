@@ -197,6 +197,37 @@
     text-transform:uppercase; display:block; margin-bottom:4px; }
 
   footer{ text-align:center; color:var(--text-dim); font-size:11px; margin-top:30px; line-height:1.6; }
+
+  .rankwrap{ margin-bottom:6px; }
+  .rankrow{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px; }
+  .ranktitle{ font-size:20px; color:var(--orange); }
+  .rankxp{ font-size:12px; color:var(--text-dim); }
+  .rankbar{ height:10px; background:var(--bg-panel-raised); border:1px solid var(--line); border-radius:6px; overflow:hidden; }
+  .rankbar-fill{ height:100%; background:linear-gradient(90deg, var(--orange-dim), var(--orange)); transition:width .4s ease; }
+  .rankhelp{ font-size:11px; color:var(--text-dim); margin-top:5px; }
+  .rankstats{ font-size:11.5px; color:var(--text-dim); margin:8px 0 2px; }
+
+  .ptbadge{
+    display:inline-block; margin-left:6px; font-family:'IBM Plex Mono',monospace; font-size:11px;
+    font-weight:600; color:var(--pass); background:rgba(122,154,83,0.15);
+    border:1px solid var(--pass); border-radius:10px; padding:1px 8px;
+    animation: popin .25s ease-out;
+  }
+  .ptbadge.fail{ color:var(--fail); background:rgba(193,69,58,0.15); border-color:var(--fail); }
+  @keyframes popin{ from{ transform:scale(0.85); opacity:0; } to{ transform:scale(1); opacity:1; } }
+
+  .cardreplica{
+    border:2px solid var(--tan); border-radius:2px; background:var(--bg-panel-raised);
+    padding:2px;
+  }
+  .cr-row{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:9px 12px; border-bottom:1px dashed var(--line);
+    font-size:13.5px;
+  }
+  .cr-row:last-child{ border-bottom:none; }
+  .cr-label{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.05em; }
+  .cr-val{ color:var(--orange); font-weight:600; text-align:right; }
 </style>
 </head>
 <body>
@@ -210,11 +241,46 @@
    into a GitHub repo and serve with GitHub Pages.
    ============================================================ */
 
+const CASUALTY_RANKS = ['Cpl.','LCpl.','Sgt.','PFC','Pvt.'];
+const CASUALTY_LASTNAMES = ['Reyes','Okafor','Delgado','Whitfield','Nakamura','Boyle','Petrov','Adeyemi','Kowalski','Marsh'];
+function randomCasualtyName(){
+  const r = CASUALTY_RANKS[Math.floor(Math.random()*CASUALTY_RANKS.length)];
+  const l = CASUALTY_LASTNAMES[Math.floor(Math.random()*CASUALTY_LASTNAMES.length)];
+  return `${r} ${l}`;
+}
+
+// ---- Hard Mode correct-answer text (self-graded, no keyword matching) ----
+function sceneSafetyAnswerText(sc){
+  return sc.stillUnderFire ? 'Return fire and get to cover before approaching' : 'Scan the area for secondary hazards before approaching';
+}
+function movementAnswerText(needsMove){
+  return needsMove ? 'Yes — move/drag to cover, then continue care' : 'No — treat in place, the scene is secure and casualty is stable';
+}
+function docAnswerText(sc){
+  return sc.documentation==='card' ? 'DD Form 1380 / TCCC Card' : "Write it on the casualty's forehead";
+}
+function treatmentCorrectText(sc){
+  return sc.id==='gsw' ? 'Tourniquet applied, airway/breathing checked, IV access, casualty insulated'
+    : sc.id==='blast' ? 'Airway secured, chest checked, wound packed/dressed, IV access, casualty insulated'
+    : sc.id==='rollover' ? 'Forearm bleeding dressed, breathing reassessed for rib injury, casualty insulated'
+    : sc.id==='drowning' ? 'Scalp bleeding controlled, airway/breathing supported, aggressive rewarming'
+    : sc.id==='pinned' ? 'Tourniquet applied — everything else deferred until behind cover'
+    : 'Airway protected, oral bleeding controlled, casualty monitored for shock';
+}
+function tqAnswerText(sc){
+  return sc.tqLocation ? `Tourniquet — ${sc.tqLocation}` : 'No tourniquet — pressure dressing/wound pack used instead';
+}
+const AVPU_OPTIONS_STATIC = { A:'A — Alert', V:'V — responds to Voice', P:'P — responds to Pain', U:'U — Unresponsive' };
+function avpuAnswerText(sc){
+  return AVPU_OPTIONS_STATIC[sc.avpu];
+}
+
+
 const SCENARIOS = [
   {
     id:'gsw',
     title:'Care Under Fire — GSW, Right Thigh',
-    brief:"Your platoon is taking sporadic fire from a tree line 150m out. Cpl. Reyes goes down after small-arms contact. He's conscious, yelling, and grabbing at his right thigh. Blood is pooling fast under him.",
+    brief:"Your platoon is taking sporadic fire from a tree line 150m out. {name} goes down after small-arms contact. He's conscious, yelling, and grabbing at his right thigh. Blood is pooling fast under him.",
     responsive:true,
     stillUnderFire:true,
     equipmentAvailable:true,
@@ -234,12 +300,41 @@ const SCENARIOS = [
       {id:'warm', text:'Prevent hypothermia — insulate/cover the casualty', correctOrder:5, letter:'H'}
     ],
     secondaryInjuries:['none-obvious'],
-    documentation:'card' // DD1380/TCCC card available
+    documentation:'card', // DD1380/TCCC card available
+    mechanism:'GSW',
+    tqLocation:'R Leg' // tourniquet applied — right thigh, shown as R Leg box on the card
+  },
+  {
+    id:'pinned',
+    title:'Care Under Fire — Pinned Down, Massive Hemorrhage',
+    brief:"Your squad is pinned down in a sustained firefight from a fortified position 80m out. {name} takes a round to the left arm and is bleeding heavily. Suppressive fire is still coming in — there's no way to render full care where he's lying.",
+    responsive:true,
+    stillUnderFire:true,
+    equipmentAvailable:false,
+    bleed:{zone:'leftArm', label:'left upper arm', wording:'a heavy, spurting bleed on the left arm'},
+    marchFindings:{
+      M:'Massive hemorrhage, left arm — the only thing you can address before reaching cover.',
+      A:'Airway is clear; he\u2019s conscious and talking, but a full check waits until you\u2019re behind cover.',
+      R:'Breathing looks adequate for now — reassess once you\u2019re not taking fire.',
+      C:'Pulse strong at the moment, but that can change fast — reassess once safe.',
+      H:'No way to address hypothermia risk while still exposed — revisit once behind cover.'
+    },
+    interventions:[
+      {id:'tq6', text:'Apply a tourniquet high and tight on the bleeding arm — the one thing you do before moving', correctOrder:1, letter:'M'},
+      {id:'airway6', text:'Once behind cover: check/open the airway if needed', correctOrder:2, letter:'A'},
+      {id:'chest6', text:'Once behind cover: check for and seal any chest wounds', correctOrder:3, letter:'R'},
+      {id:'ivio6', text:'Once behind cover: establish IV/IO access if in shock', correctOrder:4, letter:'C'},
+      {id:'warm6', text:'Once behind cover: prevent hypothermia — insulate/cover the casualty', correctOrder:5, letter:'H'}
+    ],
+    secondaryInjuries:['none-obvious'],
+    documentation:'forehead',
+    mechanism:'GSW',
+    tqLocation:'L Arm'
   },
   {
     id:'blast',
     title:'Tactical Field Care — IED Blast, Multiple Casualties',
-    brief:"A pressure-plate IED detonates near your patrol. The scene is now secure. Cpl. Okafor is on the ground, not responding to your voice. You see frag wounds to both legs, singed eyebrows, and soot around his mouth.",
+    brief:"A pressure-plate IED detonates near your patrol. The blast has stopped and no one's firing on you, but nobody's swept the area yet. {name} is on the ground, not responding to your voice. You see frag wounds to both legs, singed eyebrows, and soot around his mouth.",
     responsive:false,
     stillUnderFire:false,
     equipmentAvailable:false,
@@ -259,9 +354,105 @@ const SCENARIOS = [
       {id:'warm2', text:'Prevent hypothermia — insulate/cover the casualty', correctOrder:5, letter:'H'}
     ],
     secondaryInjuries:['eye','burns'],
-    documentation:'forehead' // no 1380 on hand
+    documentation:'forehead', // no 1380 on hand
+    mechanism:'IED',
+    tqLocation:null // pressure dressing used, not a tourniquet
+  },
+  {
+    id:'rollover',
+    title:'Tactical Field Care — Vehicle Rollover, Arm Laceration & Rib Injury',
+    brief:"Your MRAP rolls after striking a culvert on a night resupply run. {name} is pulled from the wreckage conscious, gripping his left arm, wincing with every breath from what looks like cracked ribs.",
+    responsive:true,
+    stillUnderFire:false,
+    equipmentAvailable:true,
+    bleed:{zone:'leftArm', label:'left forearm', wording:'a laceration on the left forearm, steady bleeding'},
+    marchFindings:{
+      M:'Steady bleeding, left forearm laceration.',
+      A:'Airway clear, casualty talking.',
+      R:'Breathing shallow and painful — suspected rib fracture, no visible chest wound.',
+      C:'Pulse strong but elevated from pain.',
+      H:'Alert; cold night air makes hypothermia a real risk during extended care.'
+    },
+    interventions:[
+      {id:'dress3', text:'Control the forearm bleeding with a pressure dressing', correctOrder:1, letter:'M'},
+      {id:'airway3', text:'Confirm the airway stays clear as pain limits his breathing', correctOrder:2, letter:'A'},
+      {id:'chestcheck3', text:'Reassess breathing and check for a chest wound given the rib pain', correctOrder:3, letter:'R'},
+      {id:'ivio3', text:'Monitor circulation / establish IV access if shock develops', correctOrder:4, letter:'C'},
+      {id:'warm3', text:'Prevent hypothermia — insulate and cover the casualty', correctOrder:5, letter:'H'}
+    ],
+    secondaryInjuries:['fractures'],
+    documentation:'card',
+    mechanism:'MVC',
+    tqLocation:null
+  },
+  {
+    id:'drowning',
+    title:'Field Care — Cold-Water Near-Drowning',
+    brief:"During a river crossing exercise, {name} goes under after the ice gives way. Your team pulls him out unresponsive, skin pale, not breathing normally.",
+    responsive:false,
+    stillUnderFire:false,
+    equipmentAvailable:true,
+    bleed:{zone:'head', label:'scalp', wording:'a scalp laceration from the ice, minor but worth finding on the sweep'},
+    marchFindings:{
+      M:'Minor scalp bleeding, easily controlled.',
+      A:'Airway compromised — unresponsive, needs to be opened/cleared.',
+      R:'Breathing is agonal; needs support.',
+      C:'Pulse slow, weak, skin cold.',
+      H:'Severe hypothermia — the primary threat to life here alongside airway.'
+    },
+    interventions:[
+      {id:'dress4', text:'Control the scalp bleeding', correctOrder:1, letter:'M'},
+      {id:'airway4', text:'Open and clear the airway, support breathing as needed', correctOrder:2, letter:'A'},
+      {id:'breathcheck4', text:'Reassess breathing effort and rate', correctOrder:3, letter:'R'},
+      {id:'ivio4', text:'Check circulation, gain IV/IO access if trained and available', correctOrder:4, letter:'C'},
+      {id:'warm4', text:'Aggressively rewarm — remove wet clothing, use a hypothermia wrap', correctOrder:5, letter:'H'}
+    ],
+    secondaryInjuries:['head'],
+    documentation:'card',
+    mechanism:'Other',
+    tqLocation:null
+  },
+  {
+    id:'facial',
+    title:'Tactical Field Care — Facial/Airway Blast Trauma',
+    brief:"A secondary blast catches your squad during a compound clear. {name} takes shrapnel to the face and jaw. He's conscious, spitting blood, and struggling to keep his own airway clear.",
+    responsive:true,
+    stillUnderFire:false,
+    equipmentAvailable:false,
+    bleed:{zone:'head', label:'face/jaw', wording:'oral bleeding from jaw and facial shrapnel wounds'},
+    marchFindings:{
+      M:'Oral bleeding, controllable with positioning and direct pressure.',
+      A:'Airway at risk from blood and swelling — the top priority here.',
+      R:'Breathing adequate once the airway is protected.',
+      C:'Pulse strong, no signs of shock.',
+      H:'Alert and warm; low hypothermia risk in this environment.'
+    },
+    interventions:[
+      {id:'bleed5', text:'Control oral bleeding and position to protect the airway', correctOrder:1, letter:'M'},
+      {id:'airway5', text:'Secure the airway — positioning or an airway adjunct as trained', correctOrder:2, letter:'A'},
+      {id:'breathcheck5', text:'Confirm adequate breathing once the airway is clear', correctOrder:3, letter:'R'},
+      {id:'ivio5', text:'Reassess circulation for shock', correctOrder:4, letter:'C'},
+      {id:'warm5', text:'Monitor for hypothermia given prolonged care', correctOrder:5, letter:'H'}
+    ],
+    secondaryInjuries:['fractures'],
+    documentation:'forehead',
+    mechanism:'IED',
+    tqLocation:null
   }
 ];
+
+// ---- run history (persisted locally per browser) ----
+const HISTORY_KEY = 'marchTrainerHistory_v1';
+function loadHistory(){
+  try{
+    const raw = localStorage.getItem(HISTORY_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return [];
+}
+function saveHistory(list){
+  try{ localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(-50))); }catch(e){}
+}
 
 // ---- checklist item metadata (mirrors the real ASM card) ----
 const CHECKLIST_ITEMS = [
@@ -280,16 +471,45 @@ let state = {
   screen:'title',
   scenario:null,
   results:{}, // item n -> true/false
-  studentName:''
+  history: loadHistory(),
+  runFinalized:false,
+  historyIndex:null, // which saved run is open in the detail view
+  hardMode:false
 };
 
-function go(screen){ state.screen = screen; render(); window.scrollTo(0,0); }
-function setResult(n, pass){ state.results[n] = pass; }
+function go(screen){
+  if(screen==='debrief' && !state.runFinalized) finalizeRun();
+  state.screen = screen; render(); window.scrollTo(0,0);
+}
+
+function finalizeRun(){
+  const sc = state.scenario;
+  const proficient = CHECKLIST_ITEMS.every(item => !item.critical || !!state.results[item.n]);
+  state.history.push({
+    ts: Date.now(),
+    scenarioTitle: sc.title,
+    casualtyName: sc.casualtyName,
+    results: {...state.results},
+    proficient
+  });
+  saveHistory(state.history);
+  state.runFinalized = true;
+}
+
+function setResult(n, pass){
+  state.results[n] = pass;
+}
 
 function pickScenario(){
   const s = SCENARIOS[Math.floor(Math.random()*SCENARIOS.length)];
-  state.scenario = JSON.parse(JSON.stringify(s));
+  const scenario = JSON.parse(JSON.stringify(s));
+  const name = randomCasualtyName();
+  scenario.brief = scenario.brief.replace(/\{name\}/g, name);
+  scenario.casualtyName = name;
+  scenario.avpu = scenario.responsive ? 'A' : 'U';
+  state.scenario = scenario;
   state.results = {};
+  state.runFinalized = false;
   go('s1');
 }
 
@@ -310,6 +530,7 @@ function stepDots(){
 }
 
 function esc(s){ return (s+'').replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+function shuffleArr(arr){ return [...arr].sort(()=>Math.random()-0.5); }
 
 /* ---------------- render ---------------- */
 function render(){
@@ -346,6 +567,8 @@ function renderScreen(){
     case 's8': return screenCommunicate();
     case 's9': return screenDocumentation();
     case 'debrief': return screenDebrief();
+    case 'history': return screenHistory();
+    case 'historyDetail': return screenHistoryDetail();
     default: return '';
   }
 }
@@ -356,11 +579,13 @@ function screenTitle(){
   <div class="card" data-tag="MISSION BRIEF">
     <h2>Run the casualty assessment.</h2>
     <p class="lead">This drill walks a rifleman or corpsman-in-training through all nine graded steps on the ASM Rapid Casualty Assessment card — scene safety through documentation — using a randomized combat scenario. Every step is scored Pass/Fail exactly like the real checklist, and steps marked <span class="multitag" style="color:var(--orange);border-color:var(--orange)">C</span> are critical: you must pass all of them to demonstrate proficiency.</p>
-    <div class="scenario-box">Enter a name for the score card, or leave it blank and go straight in.</div>
-    <label class="field-label">Student Name</label>
-    <input id="nameinput" class="msel" placeholder="e.g. LCpl Vasquez" style="margin-bottom:14px;">
+    <label class="opt" style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:2px;">
+      <input type="checkbox" id="hardModeToggle" style="width:16px;height:16px;" ${state.hardMode?'checked':''}>
+      <span><b>Hard Mode</b> — type your own answers instead of picking from a list (Blood Sweep and Ordering stay hands-on either way)</span>
+    </label>
     <div class="btnrow">
-      <button class="primary-btn" id="startBtn">Start Drill</button>
+      <button class="primary-btn" id="startBtn">Start New Scenario</button>
+      <button class="ghost-btn" id="historyBtn">Compare Past Grades${state.history.length ? ` (${state.history.length})` : ''}</button>
     </div>
   </div>`;
 }
@@ -368,6 +593,15 @@ function screenTitle(){
 /* ---------- STEP 1: Scene Safety ---------- */
 function screenSceneSafety(){
   const sc = state.scenario;
+  if(state.hardMode){
+    return `
+    <div class="card" data-tag="STEP 1 OF 9">
+      <h2>Scene Safety</h2>
+      <div class="scenario-box">${esc(sc.brief)}</div>
+      <p class="lead">What's your first move before you touch the casualty? Type it in your own words.</p>
+      ${hardTextStep({input:'s1Input',grade:'s1Grade',feedback:'s1Feedback',nextRow:'s1NextRow',nextBtn:'s1NextBtn'}, 'Type your answer...')}
+    </div>`;
+  }
   return `
   <div class="card" data-tag="STEP 1 OF 9">
     <h2>Scene Safety</h2>
@@ -377,11 +611,11 @@ function screenSceneSafety(){
       {t:'Rush straight to the casualty and start treatment', correct:false},
       {t: sc.stillUnderFire ? 'Return fire / seek cover, and only move to the casualty once the threat is addressed' : 'Scan the immediate area for hazards (secondary devices, fire, unstable structure) before approaching', correct:true},
       {t:'Call in a 9-line MEDEVAC before assessing anything', correct:false}
-    ], (i,opt)=>{
-      setResult(1, opt.correct);
+    ], (i,opt,revealed)=>{
+      setResult(1, revealed?false:opt.correct);
       return opt.correct
         ? `You address the threat to the scene first. Treating a casualty while you or the team are still exposed just creates more casualties — scene safety always comes before hands-on care.`
-        : `Scene safety comes first. ${sc.stillUnderFire ? 'You\u2019re still taking fire — return fire or get to cover before you close on the casualty.' : 'Even on a "secured" blast site, sweep for secondary hazards before you approach.'}`;
+        : `Scene safety comes first. ${sc.stillUnderFire ? 'You\u2019re still taking fire — return fire or get to cover before you close on the casualty.' : 'No one\u2019s shooting doesn\u2019t mean the scene is cleared — "quiet" and "swept" aren\u2019t the same thing. Secondary devices, unstable structure, or fire can still be there even once the shooting stops, so you scan before you close in.'}`;
     }, 's2')}
   </div>`;
 }
@@ -389,6 +623,14 @@ function screenSceneSafety(){
 /* ---------- STEP 2: Responsiveness ---------- */
 function screenResponsiveness(){
   const sc = state.scenario;
+  if(state.hardMode){
+    return `
+    <div class="card" data-tag="STEP 2 OF 9">
+      <h2>Assess Responsiveness</h2>
+      <p class="lead">Scene is safe. How do you check if the casualty is responsive? Type it in your own words.</p>
+      ${hardTextStep({input:'s2Input',grade:'s2Grade',feedback:'s2Feedback',nextRow:'s2NextRow',nextBtn:'s2NextBtn'}, 'Type your answer...')}
+    </div>`;
+  }
   return `
   <div class="card" data-tag="STEP 2 OF 9">
     <h2>Assess Responsiveness</h2>
@@ -397,8 +639,8 @@ function screenResponsiveness(){
       {t:'Shout and give a physical stimulus (tap/shake, sternal rub) — look for any purposeful response', correct:true},
       {t:'Assume they\u2019re responsive if their eyes are open', correct:false},
       {t:'Skip it and go straight to the blood sweep', correct:false}
-    ], (i,opt)=>{
-      setResult(2, opt.correct);
+    ], (i,opt,revealed)=>{
+      setResult(2, revealed?false:opt.correct);
       const truth = sc.responsive
         ? 'In this scenario the casualty is conscious and talking, so a verbal response confirms it fast.'
         : 'In this scenario the casualty does not respond to voice or touch — that changes your airway and evacuation priorities immediately.';
@@ -413,6 +655,14 @@ function screenResponsiveness(){
 function screenMovement(){
   const sc = state.scenario;
   const needsMove = sc.stillUnderFire || !sc.responsive;
+  if(state.hardMode){
+    return `
+    <div class="card" data-tag="STEP 3 OF 9">
+      <h2>Casualty Movement</h2>
+      <p class="lead">Does the casualty need to be moved before you continue care? Type your answer and why.</p>
+      ${hardTextStep({input:'s3Input',grade:'s3Grade',feedback:'s3Feedback',nextRow:'s3NextRow',nextBtn:'s3NextBtn'}, 'Type your answer...')}
+    </div>`;
+  }
   return `
   <div class="card" data-tag="STEP 3 OF 9">
     <h2>Casualty Movement</h2>
@@ -421,8 +671,8 @@ function screenMovement(){
       {t:'Yes — move to cover/a safer position using an appropriate drag or carry, then continue care', correct: needsMove},
       {t:'No — the casualty can be assessed and treated in place', correct: !needsMove},
       {t:'Movement is never appropriate during casualty care', correct:false}
-    ], (i,opt)=>{
-      setResult(3, opt.correct);
+    ], (i,opt,revealed)=>{
+      setResult(3, revealed?false:opt.correct);
       const reason = needsMove
         ? (sc.stillUnderFire ? 'You\u2019re still within effective enemy fire, so movement to cover takes priority over anything but massive hemorrhage control.' : 'An unresponsive casualty on open ground is still exposed to further injury and the elements, so repositioning is part of good care.')
         : 'The scene is secure and the casualty is stable enough to assess and treat where they lie — unnecessary movement can worsen injuries.';
@@ -440,7 +690,7 @@ function screenBloodSweep(){
   return `
   <div class="card" data-tag="STEP 4 OF 9 &middot; CRITICAL">
     <h2>Blood Sweep</h2>
-    <p class="lead">Run your hands (visually, on this figure) over the casualty head-to-toe to find ${esc(sc.bleed.wording)}. Tap the zone(s) you'd check, then tap the one where you find life-threatening bleeding.</p>
+    <p class="lead">Run your hands (visually, on this figure) over the casualty head-to-toe, checking every region for life-threatening bleeding. Tap each zone you'd check, then tap the one where you find it.</p>
     <div class="figure-wrap">
       <svg viewBox="0 0 120 260" xmlns="http://www.w3.org/2000/svg">
         <circle class="zone" data-zone="head" cx="60" cy="24" r="20"/>
@@ -453,6 +703,7 @@ function screenBloodSweep(){
       </svg>
     </div>
     <p class="helptext" id="sweepHint">Tap every zone — a real sweep is systematic, head to toe, not a guess.</p>
+    <div class="btnrow" id="sweepRevealRow"><button class="ghost-btn" id="sweepRevealBtn">Show Answer</button></div>
     <div id="sweepFeedback"></div>
     <div class="btnrow" id="sweepNext" style="display:none;">
       <button class="primary-btn" id="toStep5">Continue</button>
@@ -470,22 +721,43 @@ const MARCH_OPTIONS = {
 };
 function screenMarch(){
   const letters = ['M','A','R','C','H'];
+  if(state.hardMode){
+    return `
+    <div class="card" data-tag="STEP 5 OF 9 &middot; CRITICAL">
+      <h2>Verbalize MARCH</h2>
+      <p class="lead">Type what each letter stands for in the TCCC casualty assessment sequence.</p>
+      <div id="marchForm">
+      ${letters.map(L=>`
+        <label class="field-label">${L} —</label>
+        <input type="text" class="msel march-hard-input" data-letter="${L}" placeholder="Type the meaning of ${L}..." autocomplete="off">
+      `).join('')}
+      </div>
+      <div id="marchFeedback"></div>
+      <div class="btnrow">
+        <button class="primary-btn" id="checkMarch">Grade</button>
+      </div>
+    </div>`;
+  }
   return `
   <div class="card" data-tag="STEP 5 OF 9 &middot; CRITICAL">
     <h2>Verbalize MARCH</h2>
     <p class="lead">For each letter, choose what it stands for in the TCCC casualty assessment sequence.</p>
     <div id="marchForm">
-    ${letters.map(L=>`
+    ${letters.map(L=>{
+      const correctText = MARCH_OPTIONS[L][0];
+      const shuffled = shuffleArr(MARCH_OPTIONS[L]);
+      return `
       <label class="field-label">${L} —</label>
       <select class="msel" data-letter="${L}">
         <option value="">Select...</option>
-        ${MARCH_OPTIONS[L].map(o=>`<option value="${o===MARCH_OPTIONS[L][0]?'correct':'wrong'}">${o}</option>`).join('')}
+        ${shuffled.map(o=>`<option value="${o===correctText?'correct':'wrong'}">${o}</option>`).join('')}
       </select>
-    `).join('')}
+    `;}).join('')}
     </div>
     <div id="marchFeedback"></div>
     <div class="btnrow">
       <button class="primary-btn" id="checkMarch">Check</button>
+      <button class="ghost-btn" id="marchRevealBtn">Show Answer</button>
     </div>
   </div>`;
 }
@@ -505,12 +777,14 @@ function screenInterventionOrder(){
       H — ${esc(sc.marchFindings.H)}
     </div>
     <p class="lead">Drag to put these interventions in the correct MARCH order (top = first).</p>
+    ${sc.stillUnderFire ? `<p class="helptext" style="color:var(--orange);">You\u2019re still taking fire — in Care Under Fire, massive hemorrhage control is the only intervention you actually perform right now. Everything else on the list gets addressed once you\u2019re behind cover, in Tactical Field Care.</p>` : ''}
     <ul class="seqlist" id="seqlist">
       ${shuffled.map(iv=>`<li draggable="true" data-id="${iv.id}"><span class="num">::</span>${esc(iv.text)}</li>`).join('')}
     </ul>
     <div id="seqFeedback"></div>
     <div class="btnrow">
       <button class="primary-btn" id="checkSeq">Lock In Order</button>
+      <button class="ghost-btn" id="seqRevealBtn">Show Answer</button>
     </div>
   </div>`;
 }
@@ -524,6 +798,18 @@ const SECONDARY_CATALOG = [
 ];
 function screenSecondaryInjuries(){
   const sc = state.scenario;
+  if(state.hardMode){
+    return `
+    <div class="card" data-tag="STEP 7 OF 9 &middot; CRITICAL">
+      <h2>Secondary Injuries</h2>
+      <p class="lead">Type every secondary injury actually present for this casualty, or type "none" if there aren't any.</p>
+      <input type="text" id="secHardInput" class="msel" placeholder="Type your answer..." autocomplete="off">
+      <div id="secFeedback"></div>
+      <div class="btnrow">
+        <button class="primary-btn" id="checkSec">Grade</button>
+      </div>
+    </div>`;
+  }
   return `
   <div class="card" data-tag="STEP 7 OF 9 &middot; CRITICAL">
     <h2>Secondary Injuries</h2>
@@ -539,48 +825,93 @@ function screenSecondaryInjuries(){
     <div id="secFeedback"></div>
     <div class="btnrow">
       <button class="primary-btn" id="checkSec">Check</button>
+      <button class="ghost-btn" id="secRevealBtn">Show Answer</button>
     </div>
   </div>`;
 }
 
-/* ---------- STEP 8: Communicate (MIST) ---------- */
+/* ---------- STEP 8: Communicate (TCCC Card fields) ---------- */
+const MECHANISM_OPTIONS = ['Artillery','Blunt','Burn','Fall','Grenade','GSW','IED','Landmine','MVC','RPG','Other'];
+const AVPU_OPTIONS = [
+  {v:'A', label:'A — Alert'},
+  {v:'V', label:'V — responds to Voice'},
+  {v:'P', label:'P — responds to Pain'},
+  {v:'U', label:'U — Unresponsive'}
+];
+const TQ_OPTIONS = [
+  {v:'none', label:'No tourniquet — used a pressure dressing/wound pack instead'},
+  {v:'R Arm', label:'Yes — R Arm'},
+  {v:'L Arm', label:'Yes — L Arm'},
+  {v:'R Leg', label:'Yes — R Leg'},
+  {v:'L Leg', label:'Yes — L Leg'}
+];
+function tccCardRecap(sc){
+  const tqText = sc.tqLocation ? `Marked — ${sc.tqLocation} (tourniquet)` : 'Not marked — pressure dressing/wound pack used instead';
+  const avpuLabel = AVPU_OPTIONS.find(o=>o.v===sc.avpu).label;
+  return `
+  <div class="cardreplica">
+    <div class="cr-row"><span class="cr-label">Name</span><span class="cr-val">${esc(sc.casualtyName||'')}</span></div>
+    <div class="cr-row"><span class="cr-label">EVAC</span><span class="cr-val">Urgent</span></div>
+    <div class="cr-row"><span class="cr-label">Mechanism of Injury</span><span class="cr-val">${esc(sc.mechanism)}</span></div>
+    <div class="cr-row"><span class="cr-label">Tourniquet</span><span class="cr-val">${esc(tqText)}</span></div>
+    <div class="cr-row"><span class="cr-label">AVPU</span><span class="cr-val">${esc(avpuLabel)}</span></div>
+  </div>`;
+}
 function screenCommunicate(){
   const sc = state.scenario;
-  const mechCorrect = sc.id==='gsw' ? 'Gunshot wound' : 'Blast/IED';
+  if(state.hardMode){
+    return `
+    <div class="card" data-tag="STEP 8 OF 9 &middot; CRITICAL">
+      <h2>Communicate Findings — TCCC Card</h2>
+      <p class="lead">Type what you'd mark in each field on the real DD Form 1380 / TCCC Card before handing the casualty off.</p>
+      <label class="field-label">Mechanism of Injury</label>
+      <input type="text" id="mistMech" class="msel" placeholder="Type the mechanism of injury..." autocomplete="off">
+      <label class="field-label">Tourniquet (Injury diagram)</label>
+      <input type="text" id="mistTq" class="msel" placeholder="Type your answer..." autocomplete="off">
+      <label class="field-label">AVPU</label>
+      <input type="text" id="mistAvpu" class="msel" placeholder="Type your answer..." autocomplete="off">
+      <label class="field-label">Treatment rendered (summary for the receiving team)</label>
+      <input type="text" id="mistT" class="msel" placeholder="Summarize the treatment..." autocomplete="off">
+      <div id="mistFeedback"></div>
+      <div class="btnrow">
+        <button class="primary-btn" id="checkMist">Grade</button>
+      </div>
+    </div>`;
+  }
   return `
   <div class="card" data-tag="STEP 8 OF 9 &middot; CRITICAL">
-    <h2>Communicate Findings (MIST)</h2>
-    <p class="lead">Build the handoff report you'd give to the medical responders taking the casualty. Pick the correct value for each field.</p>
-    <label class="field-label">Mechanism of injury</label>
-    <select class="msel" id="mistM">
+    <h2>Communicate Findings — TCCC Card</h2>
+    <p class="lead">Fill in the fields you'd mark on the real DD Form 1380 / TCCC Card before handing the casualty off to the next provider.</p>
+    <label class="field-label">Mechanism of Injury</label>
+    <select class="msel" id="mistMech">
       <option value="">Select...</option>
-      <option value="${mechCorrect==='Gunshot wound'?'correct':'wrong'}">Gunshot wound</option>
-      <option value="${mechCorrect==='Blast/IED'?'correct':'wrong'}">Blast/IED</option>
-      <option value="wrong">Fall from height</option>
+      ${shuffleArr(MECHANISM_OPTIONS).map(m=>`<option value="${m===sc.mechanism?'correct':'wrong'}">${m}</option>`).join('')}
     </select>
-    <label class="field-label">Injuries found</label>
-    <select class="msel" id="mistI">
+    <label class="field-label">Tourniquet (Injury diagram)</label>
+    <select class="msel" id="mistTq">
       <option value="">Select...</option>
-      <option value="correct">${sc.id==='gsw' ? 'Massive hemorrhage, right thigh' : 'Frag wounds to legs, airway burn risk, possible eye/burn injury'}</option>
-      <option value="wrong">No visible injuries</option>
-      <option value="wrong">Isolated ankle sprain</option>
+      ${shuffleArr(TQ_OPTIONS).map(o=>{
+        const isCorrect = sc.tqLocation ? (o.v===sc.tqLocation) : (o.v==='none');
+        return `<option value="${isCorrect?'correct':'wrong'}">${o.label}</option>`;
+      }).join('')}
     </select>
-    <label class="field-label">Signs (vitals/mental status)</label>
-    <select class="msel" id="mistS">
+    <label class="field-label">AVPU</label>
+    <select class="msel" id="mistAvpu">
       <option value="">Select...</option>
-      <option value="${sc.responsive?'correct':'wrong'}">Responsive, thready pulse, tachypneic</option>
-      <option value="${sc.responsive?'wrong':'correct'}">Unresponsive, weak rapid pulse, shallow breathing</option>
-      <option value="wrong">Fully alert, normal vitals</option>
+      ${shuffleArr(AVPU_OPTIONS).map(o=>`<option value="${o.v===sc.avpu?'correct':'wrong'}">${o.label}</option>`).join('')}
     </select>
-    <label class="field-label">Treatment given</label>
+    <label class="field-label">Treatment rendered (summary for the receiving team)</label>
     <select class="msel" id="mistT">
       <option value="">Select...</option>
-      <option value="correct">${sc.id==='gsw' ? 'Tourniquet applied, airway/breathing checked, IV access, casualty insulated' : 'Airway secured, chest checked, wound packed/dressed, IV access, casualty insulated'}</option>
-      <option value="wrong">No treatment rendered</option>
+      ${shuffleArr([
+        {t:treatmentCorrectText(sc), v:'correct'},
+        {t:'No treatment rendered', v:'wrong'}
+      ]).map(o=>`<option value="${o.v}">${o.t}</option>`).join('')}
     </select>
     <div id="mistFeedback"></div>
     <div class="btnrow">
       <button class="primary-btn" id="checkMist">Send Report</button>
+      <button class="ghost-btn" id="mistRevealBtn">Show Answer</button>
     </div>
   </div>`;
 }
@@ -588,6 +919,15 @@ function screenCommunicate(){
 /* ---------- STEP 9: Documentation ---------- */
 function screenDocumentation(){
   const sc = state.scenario;
+  if(state.hardMode){
+    return `
+    <div class="card" data-tag="STEP 9 OF 9 &middot; CRITICAL">
+      <h2>Document the Care</h2>
+      <div class="scenario-box">${sc.equipmentAvailable ? 'You have your aid bag, including a DD Form 1380 / TCCC Card.' : 'Your DD Form 1380 / TCCC Card is not available right now — gear got separated in the blast.'}</div>
+      <p class="lead">How do you document the care you rendered? Type it in.</p>
+      ${hardTextStep({input:'s9Input',grade:'s9Grade',feedback:'s9Feedback',nextRow:'s9NextRow',nextBtn:'s9NextBtn'}, 'Type your answer...')}
+    </div>`;
+  }
   return `
   <div class="card" data-tag="STEP 9 OF 9 &middot; CRITICAL">
     <h2>Document the Care</h2>
@@ -597,8 +937,8 @@ function screenDocumentation(){
       {t:'DD Form 1380 or TCCC Card', correct: sc.documentation==='card'},
       {t:"Write directly on the casualty's forehead", correct: sc.documentation==='forehead'},
       {t:"Don't bother — verbal handoff is enough", correct:false}
-    ], (i,opt)=>{
-      setResult(9, opt.correct);
+    ], (i,opt,revealed)=>{
+      setResult(9, revealed?false:opt.correct);
       return opt.correct
         ? (sc.documentation==='card'
             ? 'Correct — with a card on hand, that\u2019s always the primary method.'
@@ -609,11 +949,10 @@ function screenDocumentation(){
 }
 
 /* ---------- DEBRIEF ---------- */
-function screenDebrief(){
-  const r = state.results;
+function checklistTableHTML(results){
   let critPass = true;
   const rows = CHECKLIST_ITEMS.map(item=>{
-    const passed = !!r[item.n];
+    const passed = !!results[item.n];
     if(item.critical && !passed) critPass = false;
     return `<tr>
       <td>${item.n}. ${item.label}</td>
@@ -622,19 +961,31 @@ function screenDebrief(){
       <td class="mark ${!passed?'f':''}">${!passed?'F':''}</td>
     </tr>`;
   }).join('');
-  const allAnswered = Object.keys(r).length >= 9;
+  const allAnswered = Object.keys(results).length >= 9;
   const proficient = allAnswered && critPass;
+  return { rows, allAnswered, proficient };
+}
 
+function screenDebrief(){
+  const { rows, allAnswered, proficient } = checklistTableHTML(state.results);
   return `
   <div class="card" data-tag="SCORE CARD">
     <h2>Skills Assessment — Debrief</h2>
-    <p class="lead">Scenario run: <b>${esc(state.scenario.title)}</b></p>
+    <p class="lead">Scenario run: <b>${esc(state.scenario.title)}</b> &middot; Casualty: ${esc(state.scenario.casualtyName||'')}</p>
     <table class="replica">
       <tr><th>Rapid Casualty Assessment</th><th>C</th><th>P</th><th>F</th></tr>
       ${rows}
     </table>
     ${allAnswered ? `<div class="prof-banner ${proficient?'yes':'no'}">Demonstrated TCCC Basic Proficiency: ${proficient?'YES':'NO'}</div>` : `<p class="helptext">Finish all 9 steps to see the proficiency call.</p>`}
     <p class="helptext">Items marked <b style="color:var(--orange)">C</b> are critical — a Fail on any critical item means no-go on proficiency, same as the real ASM card, until it's corrected and retested.</p>
+  </div>
+  <div class="card" data-tag="REFERENCE &middot; DD 1380">
+    <h2>How the card should read</h2>
+    <p class="lead" style="margin-bottom:12px;">A quick recap of the key fields for this casualty — compare against what you picked in Step 8.</p>
+    ${tccCardRecap(state.scenario)}
+  </div>
+  <div class="card" data-tag="SAVED">
+    <p class="lead" style="margin-bottom:14px;">This score card has been saved — find it any time under Compare Past Grades.</p>
     <div class="btnrow">
       <button class="primary-btn" id="retryBtn">Run Another Scenario</button>
       <button class="ghost-btn" id="titleBtn">Back to Title</button>
@@ -642,21 +993,161 @@ function screenDebrief(){
   </div>`;
 }
 
+/* ---------- HISTORY (list of past attempts) ---------- */
+function fmtDate(ts){
+  const d = new Date(ts);
+  return d.toLocaleDateString(undefined,{month:'short',day:'numeric'}) + ' ' + d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});
+}
+function screenHistory(){
+  if(!state.history.length){
+    return `
+    <div class="card" data-tag="PAST GRADES">
+      <h2>No runs yet</h2>
+      <p class="lead">Score cards show up here once you finish a scenario.</p>
+      <div class="btnrow">
+        <button class="primary-btn" id="startBtn2">Start New Scenario</button>
+        <button class="ghost-btn" id="titleBtn2">Back to Title</button>
+      </div>
+    </div>`;
+  }
+  const items = [...state.history].reverse().map((h, i)=>{
+    const idx = state.history.length - 1 - i; // real index into state.history
+    return `
+    <button class="opt histrow" data-idx="${idx}" style="display:flex;justify-content:space-between;align-items:center;">
+      <span>
+        <span style="display:block;font-weight:600;">${esc(h.scenarioTitle)}</span>
+        <span style="display:block;font-size:12px;color:var(--text-dim);">${esc(h.casualtyName||'')} &middot; ${fmtDate(h.ts)}</span>
+      </span>
+      <span class="multitag" style="color:${h.proficient?'var(--pass)':'var(--fail)'};border-color:${h.proficient?'var(--pass)':'var(--fail)'};">${h.proficient?'PASS':'NO-GO'}</span>
+    </button>`;
+  }).join('');
+  return `
+  <div class="card" data-tag="PAST GRADES">
+    <h2>Compare Past Grades</h2>
+    <p class="lead">Tap a run to see the full score card.</p>
+    ${items}
+    <div class="btnrow">
+      <button class="ghost-btn" id="clearHistBtn">Clear History</button>
+      <button class="ghost-btn" id="titleBtn2">Back to Title</button>
+    </div>
+  </div>`;
+}
+
+/* ---------- HISTORY DETAIL (one saved score card) ---------- */
+function screenHistoryDetail(){
+  const h = state.history[state.historyIndex];
+  if(!h) return `<div class="card" data-tag="PAST GRADES"><p class="lead">That run couldn\u2019t be found.</p><div class="btnrow"><button class="ghost-btn" id="backHistBtn">Back to List</button></div></div>`;
+  const { rows, allAnswered, proficient } = checklistTableHTML(h.results);
+  return `
+  <div class="card" data-tag="SAVED SCORE CARD">
+    <h2>${esc(h.scenarioTitle)}</h2>
+    <p class="lead">Casualty: ${esc(h.casualtyName||'')} &middot; ${fmtDate(h.ts)}</p>
+    <table class="replica">
+      <tr><th>Rapid Casualty Assessment</th><th>C</th><th>P</th><th>F</th></tr>
+      ${rows}
+    </table>
+    ${allAnswered ? `<div class="prof-banner ${proficient?'yes':'no'}">Demonstrated TCCC Basic Proficiency: ${proficient?'YES':'NO'}</div>` : ''}
+    <div class="btnrow">
+      <button class="ghost-btn" id="backHistBtn">Back to List</button>
+    </div>
+  </div>`;
+}
+
 /* ---------- shared option-button helper ---------- */
 function optButtons(opts, onPick, nextScreen){
-  window.__optHandler = {opts, onPick, nextScreen};
-  return `<div id="optWrap">${opts.map((o,i)=>`<button class="opt" data-i="${i}">${esc(o.t)}</button>`).join('')}</div>
+  const shuffled = shuffleArr(opts);
+  window.__optHandler = {opts:shuffled, onPick, nextScreen};
+  return `<div id="optWrap">${shuffled.map((o,i)=>`<button class="opt" data-i="${i}">${esc(o.t)}</button>`).join('')}</div>
+  <div class="btnrow" id="revealRow"><button class="ghost-btn" id="revealBtn">Show Answer</button></div>
   <div id="stepFeedback"></div>
   <div class="btnrow" id="stepNext" style="display:none;"><button class="primary-btn" id="nextBtn">Continue</button></div>`;
+}
+function feedbackHTML(pass, title, msg){
+  return `<div class="feedback ${pass?'pass':'fail'}"><b>${title}</b>${esc(msg)}</div>`;
+}
+
+/* ---------- shared Hard Mode single-field text step ---------- */
+function hardTextStep(ids, placeholder){
+  return `
+  <input type="text" id="${ids.input}" class="msel" placeholder="${esc(placeholder)}" autocomplete="off">
+  <div class="btnrow">
+    <button class="primary-btn" id="${ids.grade}">Grade</button>
+  </div>
+  <div id="${ids.feedback}"></div>
+  <div class="btnrow" id="${ids.nextRow}" style="display:none;"><button class="primary-btn" id="${ids.nextBtn}">Continue</button></div>`;
+}
+function selfGradeHTML(answerLabel, answerHTML){
+  return `<div class="feedback" style="border-color:var(--tan);"><b>${esc(answerLabel)}</b>${answerHTML}</div>
+  <p class="lead" style="margin:12px 0 8px;font-size:14px;">Did you get it right?</p>`;
+}
+function bindHardTextStep(cfg){
+  const inputEl = document.getElementById(cfg.input);
+  const gradeBtn = document.getElementById(cfg.grade);
+  const feedbackEl = document.getElementById(cfg.feedback);
+  const nextRow = document.getElementById(cfg.nextRow);
+  const nextBtn = document.getElementById(cfg.nextBtn);
+  function showNext(){
+    nextRow.style.display='flex';
+    nextBtn.onclick = ()=> go(cfg.nextScreen);
+  }
+  gradeBtn.onclick = ()=>{
+    inputEl.disabled = true;
+    gradeBtn.disabled = true;
+    feedbackEl.innerHTML = selfGradeHTML('Correct answer', esc(cfg.correctText))
+      + `<div class="btnrow">
+          <button class="primary-btn" id="${cfg.input}_yes">I got it right</button>
+          <button class="ghost-btn" id="${cfg.input}_no">I got it wrong</button>
+        </div>`;
+    document.getElementById(cfg.input+'_yes').onclick = ()=>{
+      setResult(cfg.itemN, true);
+      feedbackEl.innerHTML = feedbackHTML(true, 'Marked Correct', 'Self-graded \u2014 nice work.');
+      showNext();
+    };
+    document.getElementById(cfg.input+'_no').onclick = ()=>{
+      setResult(cfg.itemN, false);
+      feedbackEl.innerHTML = feedbackHTML(false, 'Marked Incorrect', 'Self-graded \u2014 review the correct answer before moving on.');
+      showNext();
+    };
+  };
 }
 
 /* ---------- bind interactivity per screen ---------- */
 function bindScreen(){
   if(state.screen==='title'){
-    document.getElementById('startBtn').onclick = ()=>{
-      state.studentName = document.getElementById('nameinput').value.trim();
-      pickScenario();
-    };
+    document.getElementById('startBtn').onclick = ()=> pickScenario();
+    document.getElementById('historyBtn').onclick = ()=> go('history');
+    document.getElementById('hardModeToggle').onchange = (e)=>{ state.hardMode = e.target.checked; };
+    return;
+  }
+
+  if(['s1','s2','s3','s9'].includes(state.screen) && state.hardMode){
+    const sc = state.scenario;
+    if(state.screen==='s1'){
+      bindHardTextStep({
+        input:'s1Input', grade:'s1Grade', feedback:'s1Feedback', nextRow:'s1NextRow', nextBtn:'s1NextBtn',
+        nextScreen:'s2', itemN:1,
+        correctText: sceneSafetyAnswerText(sc)
+      });
+    } else if(state.screen==='s2'){
+      bindHardTextStep({
+        input:'s2Input', grade:'s2Grade', feedback:'s2Feedback', nextRow:'s2NextRow', nextBtn:'s2NextBtn',
+        nextScreen:'s3', itemN:2,
+        correctText:'Shout and give a physical stimulus (tap/shake, sternal rub)'
+      });
+    } else if(state.screen==='s3'){
+      const needsMove = sc.stillUnderFire || !sc.responsive;
+      bindHardTextStep({
+        input:'s3Input', grade:'s3Grade', feedback:'s3Feedback', nextRow:'s3NextRow', nextBtn:'s3NextBtn',
+        nextScreen:'s4', itemN:3,
+        correctText: movementAnswerText(needsMove)
+      });
+    } else if(state.screen==='s9'){
+      bindHardTextStep({
+        input:'s9Input', grade:'s9Grade', feedback:'s9Feedback', nextRow:'s9NextRow', nextBtn:'s9NextBtn',
+        nextScreen:'debrief', itemN:9,
+        correctText: docAnswerText(sc)
+      });
+    }
     return;
   }
 
@@ -667,16 +1158,29 @@ function bindScreen(){
       btn.onclick = ()=>{
         if(btn.disabled) return;
         buttons.forEach(b=>b.disabled=true);
+        document.getElementById('revealRow').style.display='none';
         const i = +btn.dataset.i;
         const opt = window.__optHandler.opts[i];
         btn.classList.add(opt.correct?'correct':'wrong');
-        const msg = window.__optHandler.onPick(i,opt);
+        const msg = window.__optHandler.onPick(i,opt,false);
         document.getElementById('stepFeedback').innerHTML =
-          `<div class="feedback ${opt.correct?'pass':'fail'}"><b>${opt.correct?'Pass':'Needs work'}</b>${esc(msg)}</div>`;
+          feedbackHTML(opt.correct, opt.correct?'Pass':'Needs work', msg);
         document.getElementById('stepNext').style.display='flex';
         document.getElementById('nextBtn').onclick = ()=> go(window.__optHandler.nextScreen);
       };
     });
+    document.getElementById('revealBtn').onclick = ()=>{
+      buttons.forEach(b=>b.disabled=true);
+      document.getElementById('revealRow').style.display='none';
+      const correctIdx = window.__optHandler.opts.findIndex(o=>o.correct);
+      const opt = window.__optHandler.opts[correctIdx];
+      buttons[correctIdx].classList.add('correct');
+      const msg = window.__optHandler.onPick(correctIdx, opt, true);
+      document.getElementById('stepFeedback').innerHTML =
+        feedbackHTML(false, 'Shown \u2014 not scored as a pass', msg);
+      document.getElementById('stepNext').style.display='flex';
+      document.getElementById('nextBtn').onclick = ()=> go(window.__optHandler.nextScreen);
+    };
     return;
   }
 
@@ -693,16 +1197,54 @@ function bindScreen(){
           z.classList.add('hit');
           found = true;
           setResult(4, true);
+          document.getElementById('sweepRevealRow').style.display='none';
           document.getElementById('sweepFeedback').innerHTML =
-            `<div class="feedback pass"><b>Pass</b>Found it — ${esc(state.scenario.bleed.wording)}. A systematic head-to-toe sweep is exactly how you catch bleeding hidden by gear or position in the real world.</div>`;
+            feedbackHTML(true, 'Pass', `Found it — ${state.scenario.bleed.wording}. A systematic head-to-toe sweep is exactly how you catch bleeding hidden by gear or position in the real world.`);
           document.getElementById('sweepNext').style.display='flex';
         } else {
           z.classList.add('miss');
         }
       };
     });
+    document.getElementById('sweepRevealBtn').onclick = ()=>{
+      if(found) return;
+      found = true;
+      zones.forEach(z=>{ if(z.dataset.zone===correctZone) z.classList.add('correctzone'); });
+      setResult(4, false);
+      document.getElementById('sweepRevealRow').style.display='none';
+      document.getElementById('sweepFeedback').innerHTML =
+        feedbackHTML(false, 'Shown \u2014 not scored as a pass', `The bleed was here: ${state.scenario.bleed.wording}. Marked incomplete since it wasn\u2019t found on your own sweep.`);
+      document.getElementById('sweepNext').style.display='flex';
+    };
     document.getElementById('toStep5').onclick = ()=> go('s5');
-    // fail-safe: if they never find it after checking every zone
+    return;
+  }
+
+  if(state.screen==='s5' && state.hardMode){
+    document.getElementById('checkMarch').onclick = ()=>{
+      const inputs = document.querySelectorAll('.march-hard-input');
+      inputs.forEach(inp=> inp.disabled = true);
+      document.getElementById('checkMarch').disabled = true;
+      const answerList = ['M','A','R','C','H'].map(L=>`<div style="margin-top:4px;"><b>${L}</b> — ${esc(MARCH_OPTIONS[L][0])}</div>`).join('');
+      document.getElementById('marchFeedback').innerHTML =
+        selfGradeHTML('Correct answers', answerList)
+        + `<div class="btnrow">
+            <button class="primary-btn" id="marchYes">I got it right</button>
+            <button class="ghost-btn" id="marchNo">I got it wrong</button>
+          </div>`;
+      document.getElementById('marchYes').onclick = ()=>{
+        setResult(5, true);
+        document.getElementById('marchFeedback').innerHTML = feedbackHTML(true, 'Marked Correct', 'Self-graded \u2014 nice work.')
+          + `<div class="btnrow"><button class="primary-btn" id="toStep6">Continue</button></div>`;
+        document.getElementById('toStep6').onclick = ()=> go('s6');
+      };
+      document.getElementById('marchNo').onclick = ()=>{
+        setResult(5, false);
+        document.getElementById('marchFeedback').innerHTML = feedbackHTML(false, 'Marked Incorrect', 'Self-graded \u2014 review the correct answers above before moving on.')
+          + `<div class="btnrow"><button class="primary-btn" id="toStep6">Continue</button></div>`;
+        document.getElementById('toStep6').onclick = ()=> go('s6');
+      };
+    };
     return;
   }
 
@@ -712,11 +1254,23 @@ function bindScreen(){
       let allCorrect = true;
       selects.forEach(s=>{ if(s.value!=='correct') allCorrect=false; });
       setResult(5, allCorrect);
+      document.getElementById('marchRevealBtn').style.display='none';
       document.getElementById('marchFeedback').innerHTML =
-        `<div class="feedback ${allCorrect?'pass':'fail'}"><b>${allCorrect?'Pass':'Needs work'}</b>${allCorrect
+        feedbackHTML(allCorrect, allCorrect?'Pass':'Needs work', allCorrect
           ? 'MARCH = Massive hemorrhage, Airway, Respiration, Circulation, Hypothermia/Head injury — and you\u2019ve got it down.'
-          : 'MARCH stands for Massive hemorrhage, Airway, Respiration, Circulation, Hypothermia/Head injury. Review any letter you missed above.'}</div>
-        <div class="btnrow"><button class="primary-btn" id="toStep6">Continue</button></div>`;
+          : 'MARCH stands for Massive hemorrhage, Airway, Respiration, Circulation, Hypothermia/Head injury. Review any letter you missed above.')
+        + `<div class="btnrow"><button class="primary-btn" id="toStep6">Continue</button></div>`;
+      document.getElementById('toStep6').onclick = ()=> go('s6');
+    };
+    document.getElementById('marchRevealBtn').onclick = ()=>{
+      const selects = document.querySelectorAll('#marchForm select');
+      selects.forEach(s=>{ s.value='correct'; s.disabled=true; });
+      document.getElementById('checkMarch').disabled = true;
+      document.getElementById('marchRevealBtn').style.display='none';
+      setResult(5, false);
+      document.getElementById('marchFeedback').innerHTML =
+        feedbackHTML(false, 'Shown \u2014 not scored as a pass', 'MARCH = Massive hemorrhage, Airway, Respiration, Circulation, Hypothermia/Head injury. Marked incomplete since it was shown rather than recalled.')
+        + `<div class="btnrow"><button class="primary-btn" id="toStep6">Continue</button></div>`;
       document.getElementById('toStep6').onclick = ()=> go('s6');
     };
     return;
@@ -748,47 +1302,162 @@ function bindScreen(){
       const correctIds = [...state.scenario.interventions].sort((a,b)=>a.correctOrder-b.correctOrder).map(iv=>iv.id);
       const correct = JSON.stringify(ids)===JSON.stringify(correctIds);
       setResult(6, correct);
+      document.getElementById('seqRevealBtn').style.display='none';
       document.getElementById('seqFeedback').innerHTML =
-        `<div class="feedback ${correct?'pass':'fail'}"><b>${correct?'Pass':'Needs work'}</b>${correct
+        feedbackHTML(correct, correct?'Pass':'Needs work', correct
           ? 'Right order — you worked the MARCH sequence instead of treating whatever\u2019s most visible first.'
-          : 'Order matters: work the letters in M-A-R-C-H sequence, treating the highest life threat before moving to the next.'}</div>
-        <div class="btnrow"><button class="primary-btn" id="toStep7">Continue</button></div>`;
+          : 'Order matters: work the letters in M-A-R-C-H sequence, treating the highest life threat before moving to the next.')
+        + `<div class="btnrow"><button class="primary-btn" id="toStep7">Continue</button></div>`;
+      document.getElementById('toStep7').onclick = ()=> go('s7');
+    };
+    document.getElementById('seqRevealBtn').onclick = ()=>{
+      const correctOrder = [...state.scenario.interventions].sort((a,b)=>a.correctOrder-b.correctOrder);
+      correctOrder.forEach(iv=>{
+        const li = list.querySelector(`li[data-id="${iv.id}"]`);
+        if(li){ li.draggable = false; list.appendChild(li); }
+      });
+      setResult(6, false);
+      document.getElementById('checkSeq').disabled = true;
+      document.getElementById('seqRevealBtn').style.display='none';
+      document.getElementById('seqFeedback').innerHTML =
+        feedbackHTML(false, 'Shown \u2014 not scored as a pass', 'The list above is now in the correct M-A-R-C-H order. Marked incomplete since it was shown rather than worked out.')
+        + `<div class="btnrow"><button class="primary-btn" id="toStep7">Continue</button></div>`;
       document.getElementById('toStep7').onclick = ()=> go('s7');
     };
     return;
   }
 
-  if(state.screen==='s7'){
-    document.getElementById('checkSec').onclick = ()=>{
-      const checks = document.querySelectorAll('#secList input[type=checkbox]');
-      const picked = [...checks].filter(c=>c.checked).map(c=>c.dataset.sec);
-      const actual = state.scenario.secondaryInjuries.filter(s=>s!=='none-obvious');
-      const correct = picked.length===actual.length && picked.every(p=>actual.includes(p));
-      setResult(7, correct);
-      const details = actual.length
+  if(state.screen==='s7' && state.hardMode){
+    const actual = state.scenario.secondaryInjuries.filter(s=>s!=='none-obvious');
+    function secDetails(){
+      return actual.length
         ? actual.map(id=>{
             const cat = SECONDARY_CATALOG.find(c=>c.id===id);
             return `<div style="margin-top:6px;"><b style="color:var(--orange)">${cat.label}:</b> ${esc(cat.intervention)}</div>`;
           }).join('')
         : `<div style="margin-top:6px;">No secondary injuries stood out in this scenario beyond the primary wound.</div>`;
+    }
+    const input = document.getElementById('secHardInput');
+    document.getElementById('checkSec').onclick = ()=>{
+      input.disabled = true;
+      document.getElementById('checkSec').disabled = true;
+      const answerLabel = actual.length ? actual.map(id=>SECONDARY_CATALOG.find(c=>c.id===id).label).join(', ') : 'None obvious';
       document.getElementById('secFeedback').innerHTML =
-        `<div class="feedback ${correct?'pass':'fail'}"><b>${correct?'Pass':'Needs work'}</b>${correct?'You caught the right secondary injuries for this casualty.':'Compare against what was actually present below.'}${details}</div>
-        <div class="btnrow"><button class="primary-btn" id="toStep8">Continue</button></div>`;
+        selfGradeHTML('Correct answer', esc(answerLabel)) + secDetails()
+        + `<div class="btnrow">
+            <button class="primary-btn" id="secYes">I got it right</button>
+            <button class="ghost-btn" id="secNo">I got it wrong</button>
+          </div>`;
+      document.getElementById('secYes').onclick = ()=>{
+        setResult(7, true);
+        document.getElementById('secFeedback').innerHTML = feedbackHTML(true, 'Marked Correct', 'Self-graded \u2014 nice work.')
+          + `<div class="btnrow"><button class="primary-btn" id="toStep8">Continue</button></div>`;
+        document.getElementById('toStep8').onclick = ()=> go('s8');
+      };
+      document.getElementById('secNo').onclick = ()=>{
+        setResult(7, false);
+        document.getElementById('secFeedback').innerHTML = feedbackHTML(false, 'Marked Incorrect', 'Self-graded \u2014 review the correct answer above before moving on.')
+          + `<div class="btnrow"><button class="primary-btn" id="toStep8">Continue</button></div>`;
+        document.getElementById('toStep8').onclick = ()=> go('s8');
+      };
+    };
+    return;
+  }
+
+  if(state.screen==='s7'){
+    const actual = state.scenario.secondaryInjuries.filter(s=>s!=='none-obvious');
+    function secDetails(){
+      return actual.length
+        ? actual.map(id=>{
+            const cat = SECONDARY_CATALOG.find(c=>c.id===id);
+            return `<div style="margin-top:6px;"><b style="color:var(--orange)">${cat.label}:</b> ${esc(cat.intervention)}</div>`;
+          }).join('')
+        : `<div style="margin-top:6px;">No secondary injuries stood out in this scenario beyond the primary wound.</div>`;
+    }
+    document.getElementById('checkSec').onclick = ()=>{
+      const checks = document.querySelectorAll('#secList input[type=checkbox]');
+      const picked = [...checks].filter(c=>c.checked).map(c=>c.dataset.sec);
+      const correct = picked.length===actual.length && picked.every(p=>actual.includes(p));
+      setResult(7, correct);
+      document.getElementById('secRevealBtn').style.display='none';
+      document.getElementById('secFeedback').innerHTML =
+        feedbackHTML(correct, correct?'Pass':'Needs work', correct?'You caught the right secondary injuries for this casualty.':'Compare against what was actually present below.')
+        + secDetails()
+        + `<div class="btnrow"><button class="primary-btn" id="toStep8">Continue</button></div>`;
+      document.getElementById('toStep8').onclick = ()=> go('s8');
+    };
+    document.getElementById('secRevealBtn').onclick = ()=>{
+      const checks = document.querySelectorAll('#secList input[type=checkbox]');
+      checks.forEach(c=>{ c.checked = actual.includes(c.dataset.sec); c.disabled = true; });
+      document.getElementById('checkSec').disabled = true;
+      document.getElementById('secRevealBtn').style.display='none';
+      setResult(7, false);
+      document.getElementById('secFeedback').innerHTML =
+        feedbackHTML(false, 'Shown \u2014 not scored as a pass', 'Marked incomplete since it was shown rather than identified on your own.')
+        + secDetails()
+        + `<div class="btnrow"><button class="primary-btn" id="toStep8">Continue</button></div>`;
       document.getElementById('toStep8').onclick = ()=> go('s8');
     };
     return;
   }
 
-  if(state.screen==='s8'){
+  if(state.screen==='s8' && state.hardMode){
+    const sc = state.scenario;
     document.getElementById('checkMist').onclick = ()=>{
-      const ids=['mistM','mistI','mistS','mistT'];
+      ['mistMech','mistTq','mistAvpu','mistT'].forEach(id=> document.getElementById(id).disabled = true);
+      document.getElementById('checkMist').disabled = true;
+      const answerList = `
+        <div style="margin-top:4px;"><b>Mechanism</b> — ${esc(sc.mechanism)}</div>
+        <div style="margin-top:4px;"><b>Tourniquet</b> — ${esc(tqAnswerText(sc))}</div>
+        <div style="margin-top:4px;"><b>AVPU</b> — ${esc(avpuAnswerText(sc))}</div>
+        <div style="margin-top:4px;"><b>Treatment</b> — ${esc(treatmentCorrectText(sc))}</div>`;
+      document.getElementById('mistFeedback').innerHTML =
+        selfGradeHTML('Correct answers', answerList)
+        + `<div class="btnrow">
+            <button class="primary-btn" id="mistYes">I got it right</button>
+            <button class="ghost-btn" id="mistNo">I got it wrong</button>
+          </div>`;
+      document.getElementById('mistYes').onclick = ()=>{
+        setResult(8, true);
+        document.getElementById('mistFeedback').innerHTML = feedbackHTML(true, 'Marked Correct', 'Self-graded \u2014 nice work.')
+          + `<div class="btnrow"><button class="primary-btn" id="toStep9">Continue</button></div>`;
+        document.getElementById('toStep9').onclick = ()=> go('s9');
+      };
+      document.getElementById('mistNo').onclick = ()=>{
+        setResult(8, false);
+        document.getElementById('mistFeedback').innerHTML = feedbackHTML(false, 'Marked Incorrect', 'Self-graded \u2014 review the correct answers above before moving on.')
+          + `<div class="btnrow"><button class="primary-btn" id="toStep9">Continue</button></div>`;
+        document.getElementById('toStep9').onclick = ()=> go('s9');
+      };
+    };
+    return;
+  }
+
+  if(state.screen==='s8'){
+    const ids=['mistMech','mistTq','mistAvpu','mistT'];
+    document.getElementById('checkMist').onclick = ()=>{
       const correct = ids.every(id=>document.getElementById(id).value==='correct');
       setResult(8, correct);
+      document.getElementById('mistRevealBtn').style.display='none';
       document.getElementById('mistFeedback').innerHTML =
-        `<div class="feedback ${correct?'pass':'fail'}"><b>${correct?'Pass':'Needs work'}</b>${correct
-          ? 'Clean handoff — the receiving team now has mechanism, injuries, signs, and treatment in one clear report.'
-          : 'A good handoff needs all four MIST fields accurate — check any field you missed above.'}</div>
-        <div class="btnrow"><button class="primary-btn" id="toStep9">Continue</button></div>`;
+        feedbackHTML(correct, correct?'Pass':'Needs work', correct
+          ? 'Clean handoff — mechanism, tourniquet status, AVPU, and treatment all match what actually happened, exactly what the receiving team needs off the card.'
+          : 'Every field on the card matters to the next provider — check whichever one you missed above (mechanism, tourniquet, AVPU, or treatment).')
+        + `<div class="btnrow"><button class="primary-btn" id="toStep9">Continue</button></div>`;
+      document.getElementById('toStep9').onclick = ()=> go('s9');
+    };
+    document.getElementById('mistRevealBtn').onclick = ()=>{
+      ids.forEach(id=>{
+        const sel = document.getElementById(id);
+        sel.value = 'correct';
+        sel.disabled = true;
+      });
+      document.getElementById('checkMist').disabled = true;
+      document.getElementById('mistRevealBtn').style.display='none';
+      setResult(8, false);
+      document.getElementById('mistFeedback').innerHTML =
+        feedbackHTML(false, 'Shown \u2014 not scored as a pass', 'Every field above now shows the correct entry. Marked incomplete since it was shown rather than filled in from your own assessment.')
+        + `<div class="btnrow"><button class="primary-btn" id="toStep9">Continue</button></div>`;
       document.getElementById('toStep9').onclick = ()=> go('s9');
     };
     return;
@@ -797,6 +1466,35 @@ function bindScreen(){
   if(state.screen==='debrief'){
     document.getElementById('retryBtn').onclick = pickScenario;
     document.getElementById('titleBtn').onclick = ()=> go('title');
+    return;
+  }
+
+  if(state.screen==='history'){
+    if(!state.history.length){
+      document.getElementById('startBtn2').onclick = pickScenario;
+      document.getElementById('titleBtn2').onclick = ()=> go('title');
+      return;
+    }
+    document.querySelectorAll('.histrow').forEach(btn=>{
+      btn.onclick = ()=>{
+        state.historyIndex = +btn.dataset.idx;
+        go('historyDetail');
+      };
+    });
+    document.getElementById('clearHistBtn').onclick = ()=>{
+      if(confirm('Clear all saved score cards on this device?')){
+        state.history = [];
+        saveHistory(state.history);
+        render();
+      }
+    };
+    document.getElementById('titleBtn2').onclick = ()=> go('title');
+    return;
+  }
+
+  if(state.screen==='historyDetail'){
+    const backBtn = document.getElementById('backHistBtn');
+    if(backBtn) backBtn.onclick = ()=> go('history');
     return;
   }
 }
