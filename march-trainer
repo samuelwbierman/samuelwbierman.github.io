@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MARCH TRAINER — TCCC Skills Drill</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Stencil:wght@700;900&family=IBM+Plex+Mono:wght@500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#20241c;
+    --bg-panel:#2a2f22;
+    --bg-panel-raised:#333a28;
+    --od:#4b5320;
+    --od-dark:#3a4019;
+    --tan:#cdbb95;
+    --orange:#ff7a29;
+    --orange-dim:#a8531f;
+    --text:#e9e5d6;
+    --text-dim:#9aa085;
+    --fail:#c1453a;
+    --pass:#7a9a53;
+    --line: rgba(233,229,214,0.14);
+    --radius: 3px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 20% -10%, rgba(255,122,41,0.06), transparent 40%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter',system-ui,sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+  }
+  .stencil{
+    font-family:'Big Shoulders Stencil',sans-serif;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:0.02em;
+  }
+  .mono{ font-family:'IBM Plex Mono',monospace; }
+
+  #app{ max-width:640px; margin:0 auto; padding:18px 16px 60px; }
+
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    border-bottom:3px solid var(--orange);
+    padding-bottom:10px; margin-bottom:18px;
+  }
+  .topbar .brand{ display:flex; align-items:center; gap:10px; }
+  .topbar .badge{
+    width:34px;height:34px;border:2px solid var(--tan);border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:11px; font-weight:700; color:var(--tan); flex-shrink:0;
+  }
+  .topbar h1{ font-size:26px; margin:0; line-height:0.95; color:var(--tan); }
+  .topbar .sub{ font-size:10px; color:var(--text-dim); letter-spacing:0.12em; margin-top:2px;}
+  .stepdot{
+    display:flex; gap:4px;
+  }
+  .stepdot span{
+    width:7px;height:7px;border-radius:50%;background:var(--line);
+  }
+  .stepdot span.done{ background:var(--pass); }
+  .stepdot span.now{ background:var(--orange); }
+
+  .card{
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:20px;
+    margin-bottom:16px;
+    position:relative;
+  }
+  .card::before{
+    content:attr(data-tag);
+    position:absolute; top:-11px; left:14px;
+    background:var(--orange); color:#1a1c14;
+    font-family:'IBM Plex Mono',monospace; font-weight:600;
+    font-size:11px; letter-spacing:0.08em;
+    padding:2px 8px; border-radius:2px;
+  }
+  .card h2{
+    margin:6px 0 12px; font-size:21px; color:var(--tan);
+  }
+  .card p.lead{ color:var(--text); font-size:15px; line-height:1.5; margin-top:0;}
+  .scenario-box{
+    background:var(--od-dark); border-left:3px solid var(--orange);
+    padding:12px 14px; border-radius:2px; font-size:14px; line-height:1.55;
+    margin-bottom:14px; color:var(--text);
+  }
+  .scenario-box b{ color:var(--orange); }
+
+  button.opt{
+    display:block; width:100%; text-align:left;
+    background:var(--bg-panel-raised); color:var(--text);
+    border:1px solid var(--line); border-radius:2px;
+    padding:12px 14px; margin-bottom:8px; font-size:14.5px;
+    font-family:'Inter',sans-serif; cursor:pointer;
+    transition:border-color .12s, background .12s;
+  }
+  button.opt:hover{ border-color:var(--orange); background:#3a4130; }
+  button.opt:focus-visible{ outline:2px solid var(--orange); outline-offset:1px; }
+  button.opt.correct{ border-color:var(--pass); background:rgba(122,154,83,0.18); }
+  button.opt.wrong{ border-color:var(--fail); background:rgba(193,69,58,0.18); }
+  button.opt[disabled]{ cursor:default; }
+
+  .multitag{
+    display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:10px;
+    color:var(--text-dim); border:1px solid var(--line); border-radius:2px;
+    padding:1px 6px; margin-right:6px; vertical-align:middle;
+  }
+
+  .feedback{
+    margin-top:12px; padding:12px 14px; border-radius:2px; font-size:14px; line-height:1.5;
+    border:1px solid var(--line);
+  }
+  .feedback.pass{ border-color:var(--pass); background:rgba(122,154,83,0.12); }
+  .feedback.fail{ border-color:var(--fail); background:rgba(193,69,58,0.12); }
+  .feedback b{ display:block; font-family:'IBM Plex Mono',monospace; font-size:11px;
+    letter-spacing:0.08em; margin-bottom:4px; text-transform:uppercase; }
+  .feedback.pass b{ color:var(--pass); }
+  .feedback.fail b{ color:var(--fail); }
+
+  .primary-btn{
+    background:var(--orange); color:#20241c; border:none; font-weight:700;
+    padding:12px 20px; border-radius:2px; cursor:pointer; font-size:14.5px;
+    font-family:'Inter',sans-serif;
+  }
+  .primary-btn:hover{ background:#ff8c46; }
+  .primary-btn:disabled{ background:#5a5240; color:#a0a08c; cursor:not-allowed; }
+  .ghost-btn{
+    background:transparent; color:var(--tan); border:1px solid var(--line);
+    padding:12px 20px; border-radius:2px; cursor:pointer; font-size:14.5px;
+    font-family:'Inter',sans-serif;
+  }
+  .ghost-btn:hover{ border-color:var(--tan); }
+
+  .btnrow{ display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
+
+  /* body diagram for blood sweep */
+  .figure-wrap{ display:flex; justify-content:center; margin:8px 0 14px; }
+  .figure-wrap svg{ max-width:220px; width:100%; }
+  .zone{ fill:var(--bg-panel-raised); stroke:var(--line); stroke-width:1.5; cursor:pointer; transition:fill .12s; }
+  .zone:hover{ fill:#3a4130; }
+  .zone.hit{ fill:var(--fail); }
+  .zone.miss{ fill:var(--od-dark); opacity:0.6; }
+  .zone.correctzone{ fill:var(--pass); }
+
+  /* order/sequence list */
+  .seqlist{ list-style:none; padding:0; margin:0 0 6px; }
+  .seqlist li{
+    background:var(--bg-panel-raised); border:1px solid var(--line); border-radius:2px;
+    padding:11px 12px; margin-bottom:6px; font-size:14px; display:flex; align-items:center; gap:10px;
+    cursor:grab; user-select:none;
+  }
+  .seqlist li .num{
+    font-family:'IBM Plex Mono',monospace; color:var(--orange); font-weight:600; font-size:13px; width:18px;
+  }
+  .seqlist li.dragging{ opacity:0.4; }
+  .seqlist li.over{ border-color:var(--orange); }
+
+  /* checklist replica */
+  table.replica{ width:100%; border-collapse:collapse; font-size:12.5px; margin-top:6px;}
+  table.replica th{
+    background:var(--od); color:var(--tan); font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px; text-transform:uppercase; letter-spacing:0.05em;
+    padding:6px 8px; text-align:left;
+  }
+  table.replica td{ padding:7px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+  table.replica td.mark{ text-align:center; font-weight:700; width:34px; }
+  table.replica td.mark.p{ color:var(--pass); }
+  table.replica td.mark.f{ color:var(--fail); }
+  table.replica td.crit{ color:var(--orange); font-family:'IBM Plex Mono',monospace; font-weight:700; text-align:center; width:24px; }
+
+  .prof-banner{
+    text-align:center; padding:16px; margin:16px 0; border-radius:3px; font-family:'Big Shoulders Stencil',sans-serif;
+    font-size:26px; font-weight:900; letter-spacing:0.03em;
+  }
+  .prof-banner.yes{ background:rgba(122,154,83,0.18); border:2px solid var(--pass); color:var(--pass); }
+  .prof-banner.no{ background:rgba(193,69,58,0.18); border:2px solid var(--fail); color:var(--fail); }
+
+  .helptext{ font-size:12.5px; color:var(--text-dim); margin-top:8px; }
+  .kbd{ font-family:'IBM Plex Mono',monospace; background:var(--bg-panel-raised); border:1px solid var(--line);
+    padding:1px 5px; border-radius:2px; font-size:11px;}
+
+  select.msel{
+    width:100%; background:var(--bg-panel-raised); color:var(--text); border:1px solid var(--line);
+    border-radius:2px; padding:10px; font-size:14px; margin-bottom:10px; font-family:'Inter',sans-serif;
+  }
+  .field-label{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--orange); letter-spacing:0.06em;
+    text-transform:uppercase; display:block; margin-bottom:4px; }
+
+  footer{ text-align:center; color:var(--text-dim); font-size:11px; margin-top:30px; line-height:1.6; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* ============================================================
+   MARCH TRAINER — a scenario-driven drill on the ASM TCCC
+   "Rapid Casualty Assessment" skills checklist (#TCCC-ASM-12-01).
+   Vanilla JS, single file, no build step — safe to drop straight
+   into a GitHub repo and serve with GitHub Pages.
+   ============================================================ */
+
+const SCENARIOS = [
+  {
+    id:'gsw',
+    title:'Care Under Fire — GSW, Right Thigh',
+    brief:"Your platoon is taking sporadic fire from a tree line 150m out. Cpl. Reyes goes down after small-arms contact. He's conscious, yelling, and grabbing at his right thigh. Blood is pooling fast under him.",
+    responsive:true,
+    stillUnderFire:true,
+    equipmentAvailable:true,
+    bleed:{zone:'leftLeg', label:'right thigh (shown mirrored on the figure)', wording:'a spurting wound on the right thigh'},
+    marchFindings:{
+      M:'Arterial bleed, right thigh — massive hemorrhage.',
+      A:'Airway is clear; casualty is talking.',
+      R:'Breathing is fast but unlabored, no chest wounds.',
+      C:'Radial pulse present but thready — early shock.',
+      H:'No head trauma. Ground is wet; hypothermia risk if care is prolonged.'
+    },
+    interventions:[
+      {id:'tq', text:'Apply a tourniquet high and tight on the injured limb', correctOrder:1, letter:'M'},
+      {id:'airway', text:'Reposition/open the airway if needed', correctOrder:2, letter:'A'},
+      {id:'chestseal', text:'Check for and seal any open chest wounds', correctOrder:3, letter:'R'},
+      {id:'ivio', text:'Establish IV/IO access if in shock', correctOrder:4, letter:'C'},
+      {id:'warm', text:'Prevent hypothermia — insulate/cover the casualty', correctOrder:5, letter:'H'}
+    ],
+    secondaryInjuries:['none-obvious'],
+    documentation:'card' // DD1380/TCCC card available
+  },
+  {
+    id:'blast',
+    title:'Tactical Field Care — IED Blast, Multiple Casualties',
+    brief:"A pressure-plate IED detonates near your patrol. The scene is now secure. Cpl. Okafor is on the ground, not responding to your voice. You see frag wounds to both legs, singed eyebrows, and soot around his mouth.",
+    responsive:false,
+    stillUnderFire:false,
+    equipmentAvailable:false,
+    bleed:{zone:'rightLeg', label:'left lower leg', wording:'steady bleeding from a frag wound, left lower leg'},
+    marchFindings:{
+      M:'Moderate bleeding, left lower leg — not spurting.',
+      A:'Soot around the mouth, possible airway burn — at risk.',
+      R:'Breathing shallow and irregular.',
+      C:'Pulse weak and rapid.',
+      H:'Unresponsive; core temp drop risk is high lying on the ground.'
+    },
+    interventions:[
+      {id:'airway2', text:'Open/secure the airway (recovery position or adjunct)', correctOrder:1, letter:'A'},
+      {id:'chestseal2', text:'Check for and seal any open chest wounds', correctOrder:2, letter:'R'},
+      {id:'pressuredress', text:'Control the leg bleeding with a pressure dressing/wound pack', correctOrder:3, letter:'M'},
+      {id:'ivio2', text:'Establish IV/IO access', correctOrder:4, letter:'C'},
+      {id:'warm2', text:'Prevent hypothermia — insulate/cover the casualty', correctOrder:5, letter:'H'}
+    ],
+    secondaryInjuries:['eye','burns'],
+    documentation:'forehead' // no 1380 on hand
+  }
+];
+
+// ---- checklist item metadata (mirrors the real ASM card) ----
+const CHECKLIST_ITEMS = [
+  {n:1, label:'Verbalized appropriate scene safety precautions to address immediate life threats.', critical:false},
+  {n:2, label:'Assessed the casualty for responsiveness.', critical:false},
+  {n:3, label:'Identified options for casualty movement, if necessary.', critical:false},
+  {n:4, label:'Performed a blood sweep on the casualty to identify life-threatening bleeding.', critical:true},
+  {n:5, label:'Verbalized the meaning of MARCH and used the sequence to perform a casualty assessment.', critical:true},
+  {n:6, label:'Verbalized the necessary lifesaving interventions in the correct order based on the scenario.', critical:true},
+  {n:7, label:'Described secondary injuries that may be present and identified appropriate interventions.', critical:true},
+  {n:8, label:'Communicated findings and medical aid provided to medical responders.', critical:true},
+  {n:9, label:'Documented medical aid rendered on a DD Form 1380, TCCC Card, or casualty\u2019s forehead.', critical:true}
+];
+
+let state = {
+  screen:'title',
+  scenario:null,
+  results:{}, // item n -> true/false
+  studentName:''
+};
+
+function go(screen){ state.screen = screen; render(); window.scrollTo(0,0); }
+function setResult(n, pass){ state.results[n] = pass; }
+
+function pickScenario(){
+  const s = SCENARIOS[Math.floor(Math.random()*SCENARIOS.length)];
+  state.scenario = JSON.parse(JSON.stringify(s));
+  state.results = {};
+  go('s1');
+}
+
+function pctDone(){
+  const order = ['s1','s2','s3','s4','s5','s6','s7','s8','s9'];
+  const idx = order.indexOf(state.screen);
+  return idx<0?0:idx;
+}
+
+function stepDots(){
+  const order = ['s1','s2','s3','s4','s5','s6','s7','s8','s9'];
+  const cur = order.indexOf(state.screen);
+  return `<div class="stepdot">` + order.map((o,i)=>{
+    let cls='';
+    if(i<cur) cls='done'; else if(i===cur) cls='now';
+    return `<span class="${cls}"></span>`;
+  }).join('') + `</div>`;
+}
+
+function esc(s){ return (s+'').replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+
+/* ---------------- render ---------------- */
+function render(){
+  const app = document.getElementById('app');
+  let html = '';
+  html += `<div class="topbar">
+    <div class="brand">
+      <div class="badge stencil">M<br>T</div>
+      <div>
+        <h1 class="stencil">March Trainer</h1>
+        <div class="sub mono">ASM TCCC SKILLS DRILL &middot; REF #TCCC-ASM-12-01</div>
+      </div>
+    </div>
+    ${state.screen.startsWith('s') ? stepDots() : ''}
+  </div>`;
+
+  html += renderScreen();
+
+  html += `<footer>Built for platoon TCCC refreshers. Not a substitute for certified TCCC-ASM instruction or the official DHA checklist.</footer>`;
+  app.innerHTML = html;
+  bindScreen();
+}
+
+function renderScreen(){
+  switch(state.screen){
+    case 'title': return screenTitle();
+    case 's1': return screenSceneSafety();
+    case 's2': return screenResponsiveness();
+    case 's3': return screenMovement();
+    case 's4': return screenBloodSweep();
+    case 's5': return screenMarch();
+    case 's6': return screenInterventionOrder();
+    case 's7': return screenSecondaryInjuries();
+    case 's8': return screenCommunicate();
+    case 's9': return screenDocumentation();
+    case 'debrief': return screenDebrief();
+    default: return '';
+  }
+}
+
+/* ---------- TITLE ---------- */
+function screenTitle(){
+  return `
+  <div class="card" data-tag="MISSION BRIEF">
+    <h2>Run the casualty assessment.</h2>
+    <p class="lead">This drill walks a rifleman or corpsman-in-training through all nine graded steps on the ASM Rapid Casualty Assessment card — scene safety through documentation — using a randomized combat scenario. Every step is scored Pass/Fail exactly like the real checklist, and steps marked <span class="multitag" style="color:var(--orange);border-color:var(--orange)">C</span> are critical: you must pass all of them to demonstrate proficiency.</p>
+    <div class="scenario-box">Enter a name for the score card, or leave it blank and go straight in.</div>
+    <label class="field-label">Student Name</label>
+    <input id="nameinput" class="msel" placeholder="e.g. LCpl Vasquez" style="margin-bottom:14px;">
+    <div class="btnrow">
+      <button class="primary-btn" id="startBtn">Start Drill</button>
+    </div>
+  </div>`;
+}
+
+/* ---------- STEP 1: Scene Safety ---------- */
+function screenSceneSafety(){
+  const sc = state.scenario;
+  return `
+  <div class="card" data-tag="STEP 1 OF 9">
+    <h2>Scene Safety</h2>
+    <div class="scenario-box">${esc(sc.brief)}</div>
+    <p class="lead">What's your first move before you touch the casualty?</p>
+    ${optButtons([
+      {t:'Rush straight to the casualty and start treatment', correct:false},
+      {t: sc.stillUnderFire ? 'Return fire / seek cover, and only move to the casualty once the threat is addressed' : 'Scan the immediate area for hazards (secondary devices, fire, unstable structure) before approaching', correct:true},
+      {t:'Call in a 9-line MEDEVAC before assessing anything', correct:false}
+    ], (i,opt)=>{
+      setResult(1, opt.correct);
+      return opt.correct
+        ? `You address the threat to the scene first. Treating a casualty while you or the team are still exposed just creates more casualties — scene safety always comes before hands-on care.`
+        : `Scene safety comes first. ${sc.stillUnderFire ? 'You\u2019re still taking fire — return fire or get to cover before you close on the casualty.' : 'Even on a "secured" blast site, sweep for secondary hazards before you approach.'}`;
+    }, 's2')}
+  </div>`;
+}
+
+/* ---------- STEP 2: Responsiveness ---------- */
+function screenResponsiveness(){
+  const sc = state.scenario;
+  return `
+  <div class="card" data-tag="STEP 2 OF 9">
+    <h2>Assess Responsiveness</h2>
+    <p class="lead">Scene is safe. How do you check if the casualty is responsive?</p>
+    ${optButtons([
+      {t:'Shout and give a physical stimulus (tap/shake, sternal rub) — look for any purposeful response', correct:true},
+      {t:'Assume they\u2019re responsive if their eyes are open', correct:false},
+      {t:'Skip it and go straight to the blood sweep', correct:false}
+    ], (i,opt)=>{
+      setResult(2, opt.correct);
+      const truth = sc.responsive
+        ? 'In this scenario the casualty is conscious and talking, so a verbal response confirms it fast.'
+        : 'In this scenario the casualty does not respond to voice or touch — that changes your airway and evacuation priorities immediately.';
+      return opt.correct
+        ? `Correct method. ${truth}`
+        : `Not quite — you need an actual voice-and-touch check to know where they sit on the responsiveness spectrum, not an assumption. ${truth}`;
+    }, 's3')}
+  </div>`;
+}
+
+/* ---------- STEP 3: Movement ---------- */
+function screenMovement(){
+  const sc = state.scenario;
+  const needsMove = sc.stillUnderFire || !sc.responsive;
+  return `
+  <div class="card" data-tag="STEP 3 OF 9">
+    <h2>Casualty Movement</h2>
+    <p class="lead">Does the casualty need to be moved before you continue care?</p>
+    ${optButtons([
+      {t:'Yes — move to cover/a safer position using an appropriate drag or carry, then continue care', correct: needsMove},
+      {t:'No — the casualty can be assessed and treated in place', correct: !needsMove},
+      {t:'Movement is never appropriate during casualty care', correct:false}
+    ], (i,opt)=>{
+      setResult(3, opt.correct);
+      const reason = needsMove
+        ? (sc.stillUnderFire ? 'You\u2019re still within effective enemy fire, so movement to cover takes priority over anything but massive hemorrhage control.' : 'An unresponsive casualty on open ground is still exposed to further injury and the elements, so repositioning is part of good care.')
+        : 'The scene is secure and the casualty is stable enough to assess and treat where they lie — unnecessary movement can worsen injuries.';
+      return opt.correct
+        ? `Right call. ${reason}`
+        : `Reconsider: ${reason}`;
+    }, 's4')}
+  </div>`;
+}
+
+/* ---------- STEP 4: Blood Sweep ---------- */
+function screenBloodSweep(){
+  const sc = state.scenario;
+  const zone = sc.bleed.zone;
+  return `
+  <div class="card" data-tag="STEP 4 OF 9 &middot; CRITICAL">
+    <h2>Blood Sweep</h2>
+    <p class="lead">Run your hands (visually, on this figure) over the casualty head-to-toe to find ${esc(sc.bleed.wording)}. Tap the zone(s) you'd check, then tap the one where you find life-threatening bleeding.</p>
+    <div class="figure-wrap">
+      <svg viewBox="0 0 120 260" xmlns="http://www.w3.org/2000/svg">
+        <circle class="zone" data-zone="head" cx="60" cy="24" r="20"/>
+        <rect class="zone" data-zone="chest" x="34" y="48" width="52" height="46" rx="6"/>
+        <rect class="zone" data-zone="abdomen" x="38" y="96" width="44" height="34" rx="6"/>
+        <rect class="zone" data-zone="leftArm" x="4" y="52" width="24" height="90" rx="8"/>
+        <rect class="zone" data-zone="rightArm" x="92" y="52" width="24" height="90" rx="8"/>
+        <rect class="zone" data-zone="leftLeg" x="36" y="132" width="20" height="110" rx="8"/>
+        <rect class="zone" data-zone="rightLeg" x="64" y="132" width="20" height="110" rx="8"/>
+      </svg>
+    </div>
+    <p class="helptext" id="sweepHint">Tap every zone — a real sweep is systematic, head to toe, not a guess.</p>
+    <div id="sweepFeedback"></div>
+    <div class="btnrow" id="sweepNext" style="display:none;">
+      <button class="primary-btn" id="toStep5">Continue</button>
+    </div>
+  </div>`;
+}
+
+/* ---------- STEP 5: MARCH ---------- */
+const MARCH_OPTIONS = {
+  M:['Massive hemorrhage','Movement','Mobility'],
+  A:['Airway','Analgesia','Assessment'],
+  R:['Respiration/Breathing','Rescue','Reassess'],
+  C:['Circulation/shock','Casualty status','Communication'],
+  H:['Hypothermia / Head injury','Hydration','Hemorrhage (again)']
+};
+function screenMarch(){
+  const letters = ['M','A','R','C','H'];
+  return `
+  <div class="card" data-tag="STEP 5 OF 9 &middot; CRITICAL">
+    <h2>Verbalize MARCH</h2>
+    <p class="lead">For each letter, choose what it stands for in the TCCC casualty assessment sequence.</p>
+    <div id="marchForm">
+    ${letters.map(L=>`
+      <label class="field-label">${L} —</label>
+      <select class="msel" data-letter="${L}">
+        <option value="">Select...</option>
+        ${MARCH_OPTIONS[L].map(o=>`<option value="${o===MARCH_OPTIONS[L][0]?'correct':'wrong'}">${o}</option>`).join('')}
+      </select>
+    `).join('')}
+    </div>
+    <div id="marchFeedback"></div>
+    <div class="btnrow">
+      <button class="primary-btn" id="checkMarch">Check</button>
+    </div>
+  </div>`;
+}
+
+/* ---------- STEP 6: Intervention order ---------- */
+function screenInterventionOrder(){
+  const sc = state.scenario;
+  const shuffled = [...sc.interventions].sort(()=>Math.random()-0.5);
+  return `
+  <div class="card" data-tag="STEP 6 OF 9 &middot; CRITICAL">
+    <h2>Order the Interventions</h2>
+    <div class="scenario-box"><b>MARCH findings:</b><br>
+      M — ${esc(sc.marchFindings.M)}<br>
+      A — ${esc(sc.marchFindings.A)}<br>
+      R — ${esc(sc.marchFindings.R)}<br>
+      C — ${esc(sc.marchFindings.C)}<br>
+      H — ${esc(sc.marchFindings.H)}
+    </div>
+    <p class="lead">Drag to put these interventions in the correct MARCH order (top = first).</p>
+    <ul class="seqlist" id="seqlist">
+      ${shuffled.map(iv=>`<li draggable="true" data-id="${iv.id}"><span class="num">::</span>${esc(iv.text)}</li>`).join('')}
+    </ul>
+    <div id="seqFeedback"></div>
+    <div class="btnrow">
+      <button class="primary-btn" id="checkSeq">Lock In Order</button>
+    </div>
+  </div>`;
+}
+
+/* ---------- STEP 7: Secondary injuries ---------- */
+const SECONDARY_CATALOG = [
+  {id:'eye', label:'Eye trauma', intervention:'Shield/cover the eye — never apply direct pressure to the globe.'},
+  {id:'head', label:'Head injury', intervention:'Monitor for altered mental status; protect C-spine if mechanism supports it.'},
+  {id:'burns', label:'Burns', intervention:'Cover loosely, keep casualty warm, remove smoldering/wet clothing from the area.'},
+  {id:'fractures', label:'Fractures', intervention:'Splint in place, check circulation/sensation distal to the injury.'}
+];
+function screenSecondaryInjuries(){
+  const sc = state.scenario;
+  return `
+  <div class="card" data-tag="STEP 7 OF 9 &middot; CRITICAL">
+    <h2>Secondary Injuries</h2>
+    <p class="lead">Based on the scenario, select every secondary injury actually present. You'll see the right intervention for each after you check.</p>
+    <div id="secList">
+    ${SECONDARY_CATALOG.map(s=>`
+      <label class="opt" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+        <input type="checkbox" data-sec="${s.id}" style="width:16px;height:16px;">
+        <span>${s.label}</span>
+      </label>
+    `).join('')}
+    </div>
+    <div id="secFeedback"></div>
+    <div class="btnrow">
+      <button class="primary-btn" id="checkSec">Check</button>
+    </div>
+  </div>`;
+}
+
+/* ---------- STEP 8: Communicate (MIST) ---------- */
+function screenCommunicate(){
+  const sc = state.scenario;
+  const mechCorrect = sc.id==='gsw' ? 'Gunshot wound' : 'Blast/IED';
+  return `
+  <div class="card" data-tag="STEP 8 OF 9 &middot; CRITICAL">
+    <h2>Communicate Findings (MIST)</h2>
+    <p class="lead">Build the handoff report you'd give to the medical responders taking the casualty. Pick the correct value for each field.</p>
+    <label class="field-label">Mechanism of injury</label>
+    <select class="msel" id="mistM">
+      <option value="">Select...</option>
+      <option value="${mechCorrect==='Gunshot wound'?'correct':'wrong'}">Gunshot wound</option>
+      <option value="${mechCorrect==='Blast/IED'?'correct':'wrong'}">Blast/IED</option>
+      <option value="wrong">Fall from height</option>
+    </select>
+    <label class="field-label">Injuries found</label>
+    <select class="msel" id="mistI">
+      <option value="">Select...</option>
+      <option value="correct">${sc.id==='gsw' ? 'Massive hemorrhage, right thigh' : 'Frag wounds to legs, airway burn risk, possible eye/burn injury'}</option>
+      <option value="wrong">No visible injuries</option>
+      <option value="wrong">Isolated ankle sprain</option>
+    </select>
+    <label class="field-label">Signs (vitals/mental status)</label>
+    <select class="msel" id="mistS">
+      <option value="">Select...</option>
+      <option value="${sc.responsive?'correct':'wrong'}">Responsive, thready pulse, tachypneic</option>
+      <option value="${sc.responsive?'wrong':'correct'}">Unresponsive, weak rapid pulse, shallow breathing</option>
+      <option value="wrong">Fully alert, normal vitals</option>
+    </select>
+    <label class="field-label">Treatment given</label>
+    <select class="msel" id="mistT">
+      <option value="">Select...</option>
+      <option value="correct">${sc.id==='gsw' ? 'Tourniquet applied, airway/breathing checked, IV access, casualty insulated' : 'Airway secured, chest checked, wound packed/dressed, IV access, casualty insulated'}</option>
+      <option value="wrong">No treatment rendered</option>
+    </select>
+    <div id="mistFeedback"></div>
+    <div class="btnrow">
+      <button class="primary-btn" id="checkMist">Send Report</button>
+    </div>
+  </div>`;
+}
+
+/* ---------- STEP 9: Documentation ---------- */
+function screenDocumentation(){
+  const sc = state.scenario;
+  return `
+  <div class="card" data-tag="STEP 9 OF 9 &middot; CRITICAL">
+    <h2>Document the Care</h2>
+    <div class="scenario-box">${sc.equipmentAvailable ? 'You have your aid bag, including a DD Form 1380 / TCCC Card.' : 'Your DD Form 1380 / TCCC Card is not available right now — gear got separated in the blast.'}</div>
+    <p class="lead">How do you document the care you rendered?</p>
+    ${optButtons([
+      {t:'DD Form 1380 or TCCC Card', correct: sc.documentation==='card'},
+      {t:"Write directly on the casualty's forehead", correct: sc.documentation==='forehead'},
+      {t:"Don't bother — verbal handoff is enough", correct:false}
+    ], (i,opt)=>{
+      setResult(9, opt.correct);
+      return opt.correct
+        ? (sc.documentation==='card'
+            ? 'Correct — with a card on hand, that\u2019s always the primary method.'
+            : 'Correct — with no DD 1380/TCCC Card available, the casualty\u2019s forehead is the approved fallback so the next provider isn\u2019t treating blind.')
+        : 'Documentation has to happen one way or another — every provider downstream depends on knowing what\u2019s already been done.';
+    }, 'debrief')}
+  </div>`;
+}
+
+/* ---------- DEBRIEF ---------- */
+function screenDebrief(){
+  const r = state.results;
+  let critPass = true;
+  const rows = CHECKLIST_ITEMS.map(item=>{
+    const passed = !!r[item.n];
+    if(item.critical && !passed) critPass = false;
+    return `<tr>
+      <td>${item.n}. ${item.label}</td>
+      <td class="crit">${item.critical?'C':''}</td>
+      <td class="mark ${passed?'p':''}">${passed?'P':''}</td>
+      <td class="mark ${!passed?'f':''}">${!passed?'F':''}</td>
+    </tr>`;
+  }).join('');
+  const allAnswered = Object.keys(r).length >= 9;
+  const proficient = allAnswered && critPass;
+
+  return `
+  <div class="card" data-tag="SCORE CARD">
+    <h2>Skills Assessment — Debrief</h2>
+    <p class="lead">Scenario run: <b>${esc(state.scenario.title)}</b></p>
+    <table class="replica">
+      <tr><th>Rapid Casualty Assessment</th><th>C</th><th>P</th><th>F</th></tr>
+      ${rows}
+    </table>
+    ${allAnswered ? `<div class="prof-banner ${proficient?'yes':'no'}">Demonstrated TCCC Basic Proficiency: ${proficient?'YES':'NO'}</div>` : `<p class="helptext">Finish all 9 steps to see the proficiency call.</p>`}
+    <p class="helptext">Items marked <b style="color:var(--orange)">C</b> are critical — a Fail on any critical item means no-go on proficiency, same as the real ASM card, until it's corrected and retested.</p>
+    <div class="btnrow">
+      <button class="primary-btn" id="retryBtn">Run Another Scenario</button>
+      <button class="ghost-btn" id="titleBtn">Back to Title</button>
+    </div>
+  </div>`;
+}
+
+/* ---------- shared option-button helper ---------- */
+function optButtons(opts, onPick, nextScreen){
+  window.__optHandler = {opts, onPick, nextScreen};
+  return `<div id="optWrap">${opts.map((o,i)=>`<button class="opt" data-i="${i}">${esc(o.t)}</button>`).join('')}</div>
+  <div id="stepFeedback"></div>
+  <div class="btnrow" id="stepNext" style="display:none;"><button class="primary-btn" id="nextBtn">Continue</button></div>`;
+}
+
+/* ---------- bind interactivity per screen ---------- */
+function bindScreen(){
+  if(state.screen==='title'){
+    document.getElementById('startBtn').onclick = ()=>{
+      state.studentName = document.getElementById('nameinput').value.trim();
+      pickScenario();
+    };
+    return;
+  }
+
+  if(['s1','s2','s3','s9'].includes(state.screen)){
+    const wrap = document.getElementById('optWrap');
+    const buttons = wrap.querySelectorAll('button.opt');
+    buttons.forEach(btn=>{
+      btn.onclick = ()=>{
+        if(btn.disabled) return;
+        buttons.forEach(b=>b.disabled=true);
+        const i = +btn.dataset.i;
+        const opt = window.__optHandler.opts[i];
+        btn.classList.add(opt.correct?'correct':'wrong');
+        const msg = window.__optHandler.onPick(i,opt);
+        document.getElementById('stepFeedback').innerHTML =
+          `<div class="feedback ${opt.correct?'pass':'fail'}"><b>${opt.correct?'Pass':'Needs work'}</b>${esc(msg)}</div>`;
+        document.getElementById('stepNext').style.display='flex';
+        document.getElementById('nextBtn').onclick = ()=> go(window.__optHandler.nextScreen);
+      };
+    });
+    return;
+  }
+
+  if(state.screen==='s4'){
+    const zones = document.querySelectorAll('.zone');
+    const tapped = new Set();
+    const correctZone = state.scenario.bleed.zone;
+    let found = false;
+    zones.forEach(z=>{
+      z.onclick = ()=>{
+        if(found) return;
+        tapped.add(z.dataset.zone);
+        if(z.dataset.zone===correctZone){
+          z.classList.add('hit');
+          found = true;
+          setResult(4, true);
+          document.getElementById('sweepFeedback').innerHTML =
+            `<div class="feedback pass"><b>Pass</b>Found it — ${esc(state.scenario.bleed.wording)}. A systematic head-to-toe sweep is exactly how you catch bleeding hidden by gear or position in the real world.</div>`;
+          document.getElementById('sweepNext').style.display='flex';
+        } else {
+          z.classList.add('miss');
+        }
+      };
+    });
+    document.getElementById('toStep5').onclick = ()=> go('s5');
+    // fail-safe: if they never find it after checking every zone
+    return;
+  }
+
+  if(state.screen==='s5'){
+    document.getElementById('checkMarch').onclick = ()=>{
+      const selects = document.querySelectorAll('#marchForm select');
+      let allCorrect = true;
+      selects.forEach(s=>{ if(s.value!=='correct') allCorrect=false; });
+      setResult(5, allCorrect);
+      document.getElementById('marchFeedback').innerHTML =
+        `<div class="feedback ${allCorrect?'pass':'fail'}"><b>${allCorrect?'Pass':'Needs work'}</b>${allCorrect
+          ? 'MARCH = Massive hemorrhage, Airway, Respiration, Circulation, Hypothermia/Head injury — and you\u2019ve got it down.'
+          : 'MARCH stands for Massive hemorrhage, Airway, Respiration, Circulation, Hypothermia/Head injury. Review any letter you missed above.'}</div>
+        <div class="btnrow"><button class="primary-btn" id="toStep6">Continue</button></div>`;
+      document.getElementById('toStep6').onclick = ()=> go('s6');
+    };
+    return;
+  }
+
+  if(state.screen==='s6'){
+    const list = document.getElementById('seqlist');
+    let dragEl = null;
+    list.querySelectorAll('li').forEach(li=>{
+      li.addEventListener('dragstart', ()=>{ dragEl = li; li.classList.add('dragging'); });
+      li.addEventListener('dragend', ()=>{ li.classList.remove('dragging'); });
+      li.addEventListener('dragover', (e)=>{
+        e.preventDefault();
+        const after = getDragAfter(list, e.clientY);
+        if(after==null) list.appendChild(dragEl); else list.insertBefore(dragEl, after);
+      });
+    });
+    function getDragAfter(container, y){
+      const els = [...container.querySelectorAll('li:not(.dragging)')];
+      return els.reduce((closest, child)=>{
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height/2;
+        if(offset < 0 && offset > closest.offset) return {offset, element: child};
+        return closest;
+      }, {offset:-Infinity}).element;
+    }
+    document.getElementById('checkSeq').onclick = ()=>{
+      const ids = [...list.querySelectorAll('li')].map(li=>li.dataset.id);
+      const correctIds = [...state.scenario.interventions].sort((a,b)=>a.correctOrder-b.correctOrder).map(iv=>iv.id);
+      const correct = JSON.stringify(ids)===JSON.stringify(correctIds);
+      setResult(6, correct);
+      document.getElementById('seqFeedback').innerHTML =
+        `<div class="feedback ${correct?'pass':'fail'}"><b>${correct?'Pass':'Needs work'}</b>${correct
+          ? 'Right order — you worked the MARCH sequence instead of treating whatever\u2019s most visible first.'
+          : 'Order matters: work the letters in M-A-R-C-H sequence, treating the highest life threat before moving to the next.'}</div>
+        <div class="btnrow"><button class="primary-btn" id="toStep7">Continue</button></div>`;
+      document.getElementById('toStep7').onclick = ()=> go('s7');
+    };
+    return;
+  }
+
+  if(state.screen==='s7'){
+    document.getElementById('checkSec').onclick = ()=>{
+      const checks = document.querySelectorAll('#secList input[type=checkbox]');
+      const picked = [...checks].filter(c=>c.checked).map(c=>c.dataset.sec);
+      const actual = state.scenario.secondaryInjuries.filter(s=>s!=='none-obvious');
+      const correct = picked.length===actual.length && picked.every(p=>actual.includes(p));
+      setResult(7, correct);
+      const details = actual.length
+        ? actual.map(id=>{
+            const cat = SECONDARY_CATALOG.find(c=>c.id===id);
+            return `<div style="margin-top:6px;"><b style="color:var(--orange)">${cat.label}:</b> ${esc(cat.intervention)}</div>`;
+          }).join('')
+        : `<div style="margin-top:6px;">No secondary injuries stood out in this scenario beyond the primary wound.</div>`;
+      document.getElementById('secFeedback').innerHTML =
+        `<div class="feedback ${correct?'pass':'fail'}"><b>${correct?'Pass':'Needs work'}</b>${correct?'You caught the right secondary injuries for this casualty.':'Compare against what was actually present below.'}${details}</div>
+        <div class="btnrow"><button class="primary-btn" id="toStep8">Continue</button></div>`;
+      document.getElementById('toStep8').onclick = ()=> go('s8');
+    };
+    return;
+  }
+
+  if(state.screen==='s8'){
+    document.getElementById('checkMist').onclick = ()=>{
+      const ids=['mistM','mistI','mistS','mistT'];
+      const correct = ids.every(id=>document.getElementById(id).value==='correct');
+      setResult(8, correct);
+      document.getElementById('mistFeedback').innerHTML =
+        `<div class="feedback ${correct?'pass':'fail'}"><b>${correct?'Pass':'Needs work'}</b>${correct
+          ? 'Clean handoff — the receiving team now has mechanism, injuries, signs, and treatment in one clear report.'
+          : 'A good handoff needs all four MIST fields accurate — check any field you missed above.'}</div>
+        <div class="btnrow"><button class="primary-btn" id="toStep9">Continue</button></div>`;
+      document.getElementById('toStep9').onclick = ()=> go('s9');
+    };
+    return;
+  }
+
+  if(state.screen==='debrief'){
+    document.getElementById('retryBtn').onclick = pickScenario;
+    document.getElementById('titleBtn').onclick = ()=> go('title');
+    return;
+  }
+}
+
+render();
+</script>
+</body>
+</html>
