@@ -307,7 +307,7 @@ const SCENARIOS = [
   {
     id:'pinned',
     title:'Care Under Fire — Pinned Down, Massive Hemorrhage',
-    brief:"Your squad is pinned down in a sustained firefight from a fortified position 80m out. {name} takes a round to the left arm and is bleeding heavily. Suppressive fire is still coming in — there's no way to render full care where he's lying.",
+    brief:"Your squad is pinned down in a sustained firefight from a fortified position 80m out. {name} takes a round to the left arm and is bleeding heavily. Suppressive fire is still coming in.",
     responsive:true,
     stillUnderFire:true,
     equipmentAvailable:false,
@@ -334,7 +334,7 @@ const SCENARIOS = [
   {
     id:'blast',
     title:'Tactical Field Care — IED Blast, Multiple Casualties',
-    brief:"A pressure-plate IED detonates near your patrol. The blast has stopped and no one's firing on you, but nobody's swept the area yet. {name} is on the ground, not responding to your voice. You see frag wounds to both legs, singed eyebrows, and soot around his mouth.",
+    brief:"A pressure-plate IED detonates near your patrol. The blast has stopped and no one's firing on you. {name} is on the ground, not responding to your voice. You see frag wounds to both legs, singed eyebrows, and soot around his mouth.",
     responsive:false,
     stillUnderFire:false,
     equipmentAvailable:false,
@@ -1158,10 +1158,10 @@ function bindScreen(){
       btn.onclick = ()=>{
         if(btn.disabled) return;
         buttons.forEach(b=>b.disabled=true);
-        document.getElementById('revealRow').style.display='none';
         const i = +btn.dataset.i;
         const opt = window.__optHandler.opts[i];
         btn.classList.add(opt.correct?'correct':'wrong');
+        if(opt.correct) document.getElementById('revealRow').style.display='none';
         const msg = window.__optHandler.onPick(i,opt,false);
         document.getElementById('stepFeedback').innerHTML =
           feedbackHTML(opt.correct, opt.correct?'Pass':'Needs work', msg);
@@ -1254,7 +1254,9 @@ function bindScreen(){
       let allCorrect = true;
       selects.forEach(s=>{ if(s.value!=='correct') allCorrect=false; });
       setResult(5, allCorrect);
-      document.getElementById('marchRevealBtn').style.display='none';
+      document.getElementById('checkMarch').disabled = true;
+      selects.forEach(s=> s.disabled = true);
+      if(allCorrect) document.getElementById('marchRevealBtn').style.display='none';
       document.getElementById('marchFeedback').innerHTML =
         feedbackHTML(allCorrect, allCorrect?'Pass':'Needs work', allCorrect
           ? 'MARCH = Massive hemorrhage, Airway, Respiration, Circulation, Hypothermia/Head injury — and you\u2019ve got it down.'
@@ -1302,7 +1304,9 @@ function bindScreen(){
       const correctIds = [...state.scenario.interventions].sort((a,b)=>a.correctOrder-b.correctOrder).map(iv=>iv.id);
       const correct = JSON.stringify(ids)===JSON.stringify(correctIds);
       setResult(6, correct);
-      document.getElementById('seqRevealBtn').style.display='none';
+      document.getElementById('checkSeq').disabled = true;
+      list.querySelectorAll('li').forEach(li=> li.draggable = false);
+      if(correct) document.getElementById('seqRevealBtn').style.display='none';
       document.getElementById('seqFeedback').innerHTML =
         feedbackHTML(correct, correct?'Pass':'Needs work', correct
           ? 'Right order — you worked the MARCH sequence instead of treating whatever\u2019s most visible first.'
@@ -1379,7 +1383,9 @@ function bindScreen(){
       const picked = [...checks].filter(c=>c.checked).map(c=>c.dataset.sec);
       const correct = picked.length===actual.length && picked.every(p=>actual.includes(p));
       setResult(7, correct);
-      document.getElementById('secRevealBtn').style.display='none';
+      document.getElementById('checkSec').disabled = true;
+      checks.forEach(c=> c.disabled = true);
+      if(correct) document.getElementById('secRevealBtn').style.display='none';
       document.getElementById('secFeedback').innerHTML =
         feedbackHTML(correct, correct?'Pass':'Needs work', correct?'You caught the right secondary injuries for this casualty.':'Compare against what was actually present below.')
         + secDetails()
@@ -1438,7 +1444,9 @@ function bindScreen(){
     document.getElementById('checkMist').onclick = ()=>{
       const correct = ids.every(id=>document.getElementById(id).value==='correct');
       setResult(8, correct);
-      document.getElementById('mistRevealBtn').style.display='none';
+      document.getElementById('checkMist').disabled = true;
+      ids.forEach(id=> document.getElementById(id).disabled = true);
+      if(correct) document.getElementById('mistRevealBtn').style.display='none';
       document.getElementById('mistFeedback').innerHTML =
         feedbackHTML(correct, correct?'Pass':'Needs work', correct
           ? 'Clean handoff — mechanism, tourniquet status, AVPU, and treatment all match what actually happened, exactly what the receiving team needs off the card.'
