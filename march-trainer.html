@@ -284,7 +284,7 @@ const SCENARIOS = [
     responsive:true,
     stillUnderFire:true,
     equipmentAvailable:true,
-    bleed:{zone:'leftLeg', label:'right thigh (shown mirrored on the figure)', wording:'a spurting wound on the right thigh'},
+    bleed:{zone:'rightLeg', label:"the casualty's right thigh", wording:"a spurting wound on the casualty's right thigh"},
     marchFindings:{
       M:'Arterial bleed, right thigh — massive hemorrhage.',
       A:'Airway is clear; casualty is talking.',
@@ -311,7 +311,7 @@ const SCENARIOS = [
     responsive:true,
     stillUnderFire:true,
     equipmentAvailable:false,
-    bleed:{zone:'leftArm', label:'left upper arm', wording:'a heavy, spurting bleed on the left arm'},
+    bleed:{zone:'leftArm', label:"the casualty's left upper arm", wording:"a heavy, spurting bleed on the casualty's left arm"},
     marchFindings:{
       M:'Massive hemorrhage, left arm — the only thing you can address before reaching cover.',
       A:'Airway is clear; he\u2019s conscious and talking, but a full check waits until you\u2019re behind cover.',
@@ -338,7 +338,7 @@ const SCENARIOS = [
     responsive:false,
     stillUnderFire:false,
     equipmentAvailable:false,
-    bleed:{zone:'rightLeg', label:'left lower leg', wording:'steady bleeding from a frag wound, left lower leg'},
+    bleed:{zone:'leftLeg', label:"the casualty's left lower leg", wording:"steady bleeding from a frag wound on the casualty's left lower leg"},
     marchFindings:{
       M:'Moderate bleeding, left lower leg — not spurting.',
       A:'Soot around the mouth, possible airway burn — at risk.',
@@ -365,7 +365,7 @@ const SCENARIOS = [
     responsive:true,
     stillUnderFire:false,
     equipmentAvailable:true,
-    bleed:{zone:'leftArm', label:'left forearm', wording:'a laceration on the left forearm, steady bleeding'},
+    bleed:{zone:'leftArm', label:"the casualty's left forearm", wording:"a laceration on the casualty's left forearm, steady bleeding"},
     marchFindings:{
       M:'Steady bleeding, left forearm laceration.',
       A:'Airway clear, casualty talking.',
@@ -392,7 +392,7 @@ const SCENARIOS = [
     responsive:false,
     stillUnderFire:false,
     equipmentAvailable:true,
-    bleed:{zone:'head', label:'scalp', wording:'a scalp laceration from the ice, minor but worth finding on the sweep'},
+    bleed:{zone:'head', label:"the casualty's scalp", wording:"a scalp laceration on the casualty's head from the ice, minor but worth finding on the sweep"},
     marchFindings:{
       M:'Minor scalp bleeding, easily controlled.',
       A:'Airway compromised — unresponsive, needs to be opened/cleared.',
@@ -419,7 +419,7 @@ const SCENARIOS = [
     responsive:true,
     stillUnderFire:false,
     equipmentAvailable:false,
-    bleed:{zone:'head', label:'face/jaw', wording:'oral bleeding from jaw and facial shrapnel wounds'},
+    bleed:{zone:'head', label:"the casualty's face/jaw", wording:"oral bleeding from the casualty's jaw and facial shrapnel wounds"},
     marchFindings:{
       M:'Oral bleeding, controllable with positioning and direct pressure.',
       A:'Airway at risk from blood and swelling — the top priority here.',
@@ -474,7 +474,8 @@ let state = {
   history: loadHistory(),
   runFinalized:false,
   historyIndex:null, // which saved run is open in the detail view
-  hardMode:false
+  hardMode:false,
+  scenarioBag:[] // shuffled queue of scenario ids not yet seen this cycle
 };
 
 function go(screen){
@@ -500,8 +501,22 @@ function setResult(n, pass){
   state.results[n] = pass;
 }
 
+function refillScenarioBag(){
+  let bag = shuffleArr(SCENARIOS.map(s=>s.id));
+  // pop() draws from the end of the array first — make sure that doesn't
+  // repeat whatever scenario just finished, so cycles never repeat back-to-back.
+  if(state.lastScenarioId && bag.length>1 && bag[bag.length-1]===state.lastScenarioId){
+    const swapIdx = Math.floor(Math.random()*(bag.length-1));
+    const last = bag.length-1;
+    [bag[swapIdx], bag[last]] = [bag[last], bag[swapIdx]];
+  }
+  state.scenarioBag = bag;
+}
 function pickScenario(){
-  const s = SCENARIOS[Math.floor(Math.random()*SCENARIOS.length)];
+  if(!state.scenarioBag || state.scenarioBag.length===0) refillScenarioBag();
+  const nextId = state.scenarioBag.pop();
+  state.lastScenarioId = nextId;
+  const s = SCENARIOS.find(sc=>sc.id===nextId);
   const scenario = JSON.parse(JSON.stringify(s));
   const name = randomCasualtyName();
   scenario.brief = scenario.brief.replace(/\{name\}/g, name);
@@ -702,6 +717,7 @@ function screenBloodSweep(){
         <rect class="zone" data-zone="rightLeg" x="64" y="132" width="20" height="110" rx="8"/>
       </svg>
     </div>
+    <p class="helptext" style="text-align:center;">This figure isn't mirrored — the casualty's left is shown on the left, their right on the right, same as your own body.</p>
     <p class="helptext" id="sweepHint">Tap every zone — a real sweep is systematic, head to toe, not a guess.</p>
     <div class="btnrow" id="sweepRevealRow"><button class="ghost-btn" id="sweepRevealBtn">Show Answer</button></div>
     <div id="sweepFeedback"></div>
