@@ -1,0 +1,16 @@
+# TBS Phase II Flashcards
+
+Static flashcard site for TBS Phase II, hosted on GitHub Pages, with company-submitted cards stored in Supabase.
+
+- `index.html` is the whole site: the base deck of 282 cards is built in, and submitted cards are pulled from Supabase.
+- `supabase-setup.sql` creates the `cards` table and its security rules.
+
+## How it works
+
+- A new visitor has to add one card, with their name on it, before the deck unlocks. Their browser remembers that they've contributed.
+- Submitted cards always land in **User Created**. The site cannot edit or delete cards; you file them into categories from the Supabase dashboard.
+- The Supabase anon key is meant to be public. Row Level Security limits it to reading cards and adding new ones to User Created.
+
+## Filing submitted cards
+
+In Supabase, go to **Table Editor -> cards**, then double-click a row's `category` cell and type the exact category name. The list of names is at the bottom of `supabase-setup.sql`. To remove spam, select the row and delete it.
